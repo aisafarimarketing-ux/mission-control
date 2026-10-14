@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter, JetBrains_Mono } from 'next/font/google'
+import { Inter, JetBrains_Mono, Chakra_Petch, Azeret_Mono } from 'next/font/google'
 import { headers } from 'next/headers'
 import { ThemeProvider } from 'next-themes'
 import { NextIntlClientProvider } from 'next-intl'
@@ -8,10 +8,24 @@ import { THEME_IDS } from '@/lib/themes'
 import { ThemeBackground } from '@/components/ui/theme-background'
 import { AuthExpiredListener } from '@/components/auth-expired-listener'
 import './globals.css'
+import './core.css'
 
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
+  display: 'swap',
+})
+
+const chakra = Chakra_Petch({
+  subsets: ['latin'],
+  weight: ['500', '600', '700'],
+  variable: '--font-chakra',
+  display: 'swap',
+})
+
+const azeret = Azeret_Mono({
+  subsets: ['latin'],
+  variable: '--font-azeret',
   display: 'swap',
 })
 
@@ -104,15 +118,15 @@ export default async function RootLayout({
         <script
           nonce={nonce}
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme')||'void';var light=['light','paper'];if(light.indexOf(t)===-1)document.documentElement.classList.add('dark')}catch(e){}})()`,
+            __html: `(function(){try{var t=localStorage.getItem('theme')||'safari-core';var light=['light','paper','safari-core'];if(light.indexOf(t)===-1)document.documentElement.classList.add('dark')}catch(e){}})()`,
           }}
         />
       </head>
-      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`} suppressHydrationWarning>
+      <body className={`${inter.variable} ${jetbrainsMono.variable} ${chakra.variable} ${azeret.variable} font-sans antialiased`} suppressHydrationWarning>
         <NextIntlClientProvider messages={messages}>
           <ThemeProvider
             attribute="class"
-            defaultTheme="void"
+            defaultTheme="safari-core"
             themes={THEME_IDS}
             enableSystem={false}
             disableTransitionOnChange

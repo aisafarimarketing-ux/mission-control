@@ -6,6 +6,7 @@ import { NavRail } from '@/components/layout/nav-rail'
 import { HeaderBar } from '@/components/layout/header-bar'
 import { LiveFeed } from '@/components/layout/live-feed'
 import { Dashboard } from '@/components/dashboard/dashboard'
+import { CoreView } from '@/components/core/core-view'
 import { LogViewerPanel } from '@/components/panels/log-viewer-panel'
 import { CronManagementPanel } from '@/components/panels/cron-management-panel'
 import { MemoryBrowserPanel } from '@/components/panels/memory-browser-panel'
@@ -441,6 +442,9 @@ export default function Home() {
   if (!isClient || !bootComplete) {
     return <Loader variant="page" steps={isClient ? initSteps : undefined} />
   }
+
+  // Safari Core: the landing is the v13 command room, full screen
+  if (activeTab === 'overview' && !showOnboarding) return <CoreView />
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
