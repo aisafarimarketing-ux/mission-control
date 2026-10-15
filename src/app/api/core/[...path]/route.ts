@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireRole } from '@/lib/auth'
 
 // Founder-only proxy from the Core UI to the talk bridge on the VM host (core-bridge/bridge.mjs).
-const ALLOWED = new Set(['talk', 'ledger', 'proposals', 'proposals/decide', 'roster'])
+const ALLOWED = new Set(['talk', 'ledger', 'situation', 'proposals', 'proposals/decide', 'roster'])
 
 async function forward(request: NextRequest, path: string[], method: 'GET' | 'POST') {
   const auth = requireRole(request, 'admin')
@@ -18,6 +18,10 @@ async function forward(request: NextRequest, path: string[], method: 'GET' | 'PO
       body: method === 'POST' ? await request.text() : undefined,
       signal: AbortSignal.timeout(200_000),
     })
+    // Talk answers stream as server-sent events: pass the stream straight through so speech starts at the first sentence.
+    if (res.headers.get('content-type')?.startsWith('text/event-stream')) {
+      return new Response(res.body, { headers: { 'content-type': 'text/event-stream', 'cache-control': 'no-cache, no-transform', 'x-accel-buffering': 'no' } })
+    }
     return NextResponse.json(await res.json(), { status: res.status })
   } catch {
     return NextResponse.json({ error: 'The agents are unreachable right now. Watchman will flag it if it persists.' }, { status: 502 })

@@ -6,7 +6,7 @@ export function buildMissionControlCsp(input: { nonce: string; googleEnabled: bo
     `base-uri 'self'`,
     `object-src 'none'`,
     `frame-ancestors 'none'`,
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' blob:${googleEnabled ? ' https://accounts.google.com' : ''}`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'wasm-unsafe-eval' blob:${googleEnabled ? ' https://accounts.google.com' : ''}`,
     `style-src 'self' 'unsafe-inline'`,
     `style-src-elem 'self' 'unsafe-inline'`,
     `style-src-attr 'unsafe-inline'`,
