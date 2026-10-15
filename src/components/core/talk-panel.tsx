@@ -26,7 +26,11 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
   const [proposal, setProposal] = useState<Proposal | null>(null)
   const [note, setNote] = useState('')
   const [voicePct, setVoicePct] = useState<number | null>(null)
-  const [micHelp, setMicHelp] = useState(false) // null = ready or not started
+  const [micHelp, setMicHelp] = useState(false)
+  // 'fast' = the browser's own natural voice (instant; Microsoft natural voices in Edge), 'kokoro' = our own voice.
+  const [engine, setEngine] = useState<'fast' | 'kokoro'>('fast')
+  const answer = useRef('') // full text of the answer being spoken, to recognise our own voice in the mic
+  const pendingSpeech = useRef(''); const sendTimer = useRef<ReturnType<typeof setTimeout> | null>(null) // null = ready or not started
   const rec = useRef<SR | null>(null)
   const wantListen = useRef(false)
   const logRef = useRef<HTMLDivElement>(null)
@@ -44,6 +48,13 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
 
   useEffect(() => { logRef.current?.scrollTo({ top: logRef.current.scrollHeight }) }, [lines, interim])
 
+  useEffect(() => {
+    const decide = () => { let saved: string | null = null; try { saved = localStorage.getItem('core-voice-engine') } catch { /* blocked */ }
+      setEngine(saved === 'kokoro' || saved === 'fast' ? saved : hasNatural() ? 'fast' : 'kokoro') }
+    decide(); speechSynthesis.addEventListener?.('voiceschanged', decide)
+    return () => speechSynthesis.removeEventListener?.('voiceschanged', decide)
+  }, [])
+  function chooseEngine(e: 'fast' | 'kokoro') { setEngine(e); try { localStorage.setItem('core-voice-engine', e) } catch { /* blocked */ } }
   useEffect(() => { apiFetch<Record<string, string>>('/api/core/voices').then(p => { if (p[agent]) setPick(p[agent]) }).catch(() => {}) }, [agent])
   async function choose(v: string) {
     setPick(v)
@@ -64,15 +75,19 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
 
   function browserVoice() {
     const vs = speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'))
-    const want = voice === 'F' ? /(female|aria|jenny|sonia|libby|samantha|zira|serena)/i : /(male|guy|ryan|thomas|daniel|david|arthur)/i
-    return vs.find(v => /natural|online/i.test(v.name) && want.test(v.name)) || vs.find(v => want.test(v.name)) || vs[0]
+    const female = pick[1] === 'f', british = pick[0] === 'b'
+    const want = female ? /(female|aria|jenny|sonia|libby|ava|emma|michelle|samantha|zira|serena|natasha)/i : /(male|guy|ryan|thomas|andrew|brian|christopher|eric|daniel|david|arthur|william)/i
+    const natural = vs.filter(v => /natural|online|google/i.test(v.name))
+    const gb = (l: SpeechSynthesisVoice[]) => l.filter(v => /GB/i.test(v.lang))
+    return (british && gb(natural).find(v => want.test(v.name))) || natural.find(v => want.test(v.name)) || natural[0] || vs.find(v => want.test(v.name)) || vs[0]
   }
+  const hasNatural = () => speechSynthesis.getVoices().some(v => v.lang.startsWith('en') && /natural|online/i.test(v.name))
 
   // Queue one sentence: synthesise with Kokoro (in parallel with playback of earlier ones), then play in order.
   function say(sentence: string, id: number) {
     const s = sentence.trim(); if (!s) return
     pending.current++; setTalking(true)
-    const made = tts.current ? tts.current.generate(s, { voice: pick }).catch(() => null) : Promise.resolve(null)
+    const made = engine === 'kokoro' && tts.current ? tts.current.generate(s, { voice: pick }).catch(() => null) : Promise.resolve(null)
     chain.current = chain.current.then(async () => {
       const raw = await made
       if (id !== turnId.current) return
@@ -131,7 +146,7 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
           const ev = JSON.parse(chunk.slice(6)) as { d?: string; done?: boolean; reply?: string; proposal?: Proposal | null; error?: string }
           if (ev.error) throw new ApiError('SERVER_ERROR', 500, ev.error)
           if (ev.d) {
-            text_ += ev.d
+            text_ += ev.d; answer.current = text_
             if (!text_.includes('```')) { setLines(l => [...l.slice(0, -1), { who: 'agent', text: text_ }]); if (id === turnId.current) flush(false) }
           }
           if (ev.done) {
@@ -169,11 +184,18 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
       let fin = '', mid = ''
       for (let i = e.resultIndex; i < e.results.length; i++) (e.results[i].isFinal ? (fin += e.results[i][0].transcript) : (mid += e.results[i][0].transcript))
       const heardNow = (mid || fin).trim().toLowerCase()
-      // Barge-in: two real words from you stop the agent (ignores its own voice leaking from the speakers).
-      const echo = (said.current.join(' ') + ' ' + current.current).toLowerCase()
-      if (speakingRef.current && heardNow.split(/\s+/).filter(Boolean).length >= 2 && !echo.includes(heardNow)) stopSpeaking()
-      setInterim(mid)
-      if (fin.trim() && !(speakingRef.current && echo.includes(fin.trim().toLowerCase()))) { setInterim(''); send(fin) }
+      // Our own voice leaking from the speakers: most of what the mic hears is words from the current answer.
+      const words = heardNow.split(/[^\p{L}\p{N}']+/u).filter(Boolean)
+      const ans = new Set(answer.current.toLowerCase().split(/[^\p{L}\p{N}']+/u))
+      const isEcho = speakingRef.current && words.length > 0 && words.filter(w => ans.has(w)).length / words.length >= 0.5
+      // Barge-in: three of your own words stop the agent.
+      if (speakingRef.current && !isEcho && words.length >= 3) stopSpeaking()
+      if (isEcho) return
+      setInterim((pendingSpeech.current + ' ' + mid).trim())
+      if (sendTimer.current) clearTimeout(sendTimer.current)
+      if (fin.trim()) pendingSpeech.current = (pendingSpeech.current + ' ' + fin).trim()
+      // Wait for 1.4 s of quiet so a short pause does not cut you off.
+      if (pendingSpeech.current) sendTimer.current = setTimeout(() => { const t = pendingSpeech.current; pendingSpeech.current = ''; setInterim(''); send(t) }, mid ? 2200 : 1400)
     }
     r.onerror = e => { if (e.error === 'not-allowed') { setMicHelp(true); wantListen.current = false; setListening(false) } }
     r.onend = () => { if (wantListen.current) { try { r.start() } catch { /* already running */ } } }
@@ -201,7 +223,7 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
       <div className={`talk-portrait${speaking ? ' speaking' : ''}${busy ? ' thinking' : ''}`}>
         {/* eslint-disable-next-line @next/next/no-img-element -- static portrait from /public, fixed size */}
         <img src={`/agents/${agent}.webp`} alt={`${name}, ${role}`} />
-        <span className="talk-state">{busy && !speaking ? 'thinking' : speaking ? 'speaking' : listening ? 'listening' : 'ready'}{voicePct !== null ? ` · voice ${voicePct}%` : ''}</span>
+        <span className="talk-state">{busy && !speaking ? 'thinking' : speaking ? 'speaking' : listening ? 'listening' : 'ready'}{engine === 'kokoro' && voicePct !== null ? ` · our voice ${voicePct}%` : ''}</span>
         <button type="button" className={`talk-mic${listening ? ' on' : ''}`} aria-pressed={listening} aria-label={listening ? 'Stop listening' : `Talk to ${first}`} onClick={toggleMic}>
           <MicIcon /><span>{listening ? 'Listening' : 'Talk'}</span>
         </button>
@@ -215,6 +237,10 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
                 {VOICES.map(v => <option key={v} value={v}>{voiceLabel(v)}</option>)}
               </select>
             </label>
+            <div className="talk-engine" role="group" aria-label="Voice engine">
+              <button type="button" aria-pressed={engine === 'fast'} className={engine === 'fast' ? 'on' : ''} onClick={() => chooseEngine('fast')}>Fast voice</button>
+              <button type="button" aria-pressed={engine === 'kokoro'} className={engine === 'kokoro' ? 'on' : ''} onClick={() => chooseEngine('kokoro')}>Our voice</button>
+            </div>
             <button type="button" className="talk-x" onClick={onDictionary}>Dictionary</button>
             <button type="button" className="talk-x" onClick={onClose} aria-label="Close">Close</button>
           </div>

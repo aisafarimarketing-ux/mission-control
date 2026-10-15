@@ -350,3 +350,6 @@
 .core-root .dict-w small{font:400 14px var(--mono);color:var(--ink-3)}
 @media (max-width:760px){.core-root .dict-row{flex-wrap:wrap}.core-root .dict-w{flex-basis:100%}}
 @media (max-width:760px){.core-root .core-dict{grid-template-rows:minmax(0,1fr)}}
+.core-root .talk-engine{display:flex;border-radius:10px;overflow:hidden;box-shadow:inset 2px 2px 5px var(--sh-hi),inset -2px -2px 5px var(--sh-lo)}
+.core-root .talk-engine button{padding:9px 12px;border:0;background:transparent;color:var(--ink-3);font:600 12px var(--mono);letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.core-root .talk-engine button.on{background:var(--card-hi);color:var(--ink);box-shadow:-2px -2px 5px var(--sh-lo),3px 3px 6px var(--sh-hi)}
