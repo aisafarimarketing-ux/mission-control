@@ -88,6 +88,7 @@ const SEES_SITUATION = new Set(['kamanda', 'watchman'])
 
 // ---------- warm agent processes ----------
 const warm = new Map() // agent -> { p, buf, turn, queue, last, idle }
+const ALWAYS_WARM = new Set((process.env.ALWAYS_WARM || 'kamanda').split(',').filter(Boolean)) // never cold: first word in ~1 s
 function spawnAgent(agent) {
   const sessions = readJson(SESSIONS, {})
   const args = ['-p', '--input-format', 'stream-json', '--output-format', 'stream-json', '--verbose', '--include-partial-messages',
@@ -110,13 +111,14 @@ function spawnAgent(agent) {
   })
   p.on('close', () => {
     warm.delete(agent)
+    if (ALWAYS_WARM.has(agent)) setTimeout(() => { if (!warm.has(agent)) spawnAgent(agent) }, 3000)
     if (w.turn) { w.turn.onError(`The agent stopped unexpectedly. ${w.err.slice(-200)}`); w.turn = null }
     for (const q of w.queue) q.onError('The agent restarted; please say that again.')
   })
   warm.set(agent, w)
   // keep at most WARM_MAX warm: retire the least recently used idle one
   if (warm.size > WARM_MAX) {
-    const [oldAgent, old] = [...warm.entries()].filter(([a, x]) => a !== agent && !x.turn).sort((a, b) => a[1].last - b[1].last)[0] || []
+    const [oldAgent, old] = [...warm.entries()].filter(([a, x]) => a !== agent && !x.turn && !ALWAYS_WARM.has(a)).sort((a, b) => a[1].last - b[1].last)[0] || []
     if (old) { old.p.stdin.end(); warm.delete(oldAgent) }
   }
   return w
@@ -128,7 +130,7 @@ function finishTurn(agent, w, j) {
     in: j.usage?.input_tokens, out: j.usage?.output_tokens, cache_read: j.usage?.cache_read_input_tokens }
   fs.appendFileSync(LEDGER, JSON.stringify(row) + '\n')
   t.onDone({ ...row, reply: t.text || j.result || '' })
-  clearTimeout(w.idle); w.idle = setTimeout(() => { if (!w.turn) w.p.stdin.end() }, IDLE_MS)
+  clearTimeout(w.idle); if (!ALWAYS_WARM.has(agent)) w.idle = setTimeout(() => { if (!w.turn) w.p.stdin.end() }, IDLE_MS)
   const next = w.queue.shift(); if (next) startTurn(agent, w, next)
 }
 function startTurn(agent, w, turn) {
@@ -217,4 +219,4 @@ http.createServer(async (req, res) => {
     }
     send(res, 404, { error: 'not found' })
   } catch (e) { if (!res.headersSent) send(res, 500, { error: String(e.message || e) }); else res.end() }
-}).listen(PORT, HOST, () => console.log(`core-bridge on ${HOST}:${PORT} (model ${MODEL}, warm max ${WARM_MAX})`))
+}).listen(PORT, HOST, () => { for (const a of ALWAYS_WARM) if (persona(a)) spawnAgent(a) }).on('listening', () => console.log(`core-bridge on ${HOST}:${PORT} (model ${MODEL}, warm max ${WARM_MAX})`))
