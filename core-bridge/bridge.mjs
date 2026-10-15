@@ -42,20 +42,25 @@ function persona(agent) {
 }
 
 // ---------- live situation report (refreshed every minute) ----------
-const SERVICES = [
-  ['Safari HQ', 'https://hq.safaritechlab.com/api/health'], ['Public site', 'https://safaritechlab.com'],
-  ['Safari Studio', 'https://app.safaristudio.co'], ['KaribuLink', 'https://www.karibulink.com'],
-  ['Property Hub', 'https://safaripropertyhub.com'], ['Mail Agent', 'https://safari-mail-agent.aisafarimarketing.workers.dev'],
-  ['Safari Video Studio', 'https://safarivideostudio.com'], ['Safari Core', 'https://core.safaritechlab.com'],
+const SERVICES = [ // [name, url, where it runs] — so nobody blames the VM for a Railway outage
+  ['Safari HQ', 'https://hq.safaritechlab.com/api/health', 'Railway; its /api/health also reports its database'],
+  ['Public site', 'https://safaritechlab.com', 'Railway (served by Safari HQ)'],
+  ['Safari Studio', 'https://app.safaristudio.co', 'Railway'], ['KaribuLink', 'https://www.karibulink.com', 'Railway'],
+  ['Property Hub', 'https://safaripropertyhub.com', 'Railway'], ['Mail Agent', 'https://safari-mail-agent.aisafarimarketing.workers.dev', 'Cloudflare Workers'],
+  ['Safari Video Studio', 'https://safarivideostudio.com', 'tunnel from the VM'], ['Safari Core', 'https://core.safaritechlab.com', 'this VM'],
 ]
 const sh = (cmd, args) => new Promise(r => execFile(cmd, args, { timeout: 8000 }, (e, out) => r(e ? '' : String(out).trim())))
 let situation = 'Situation report is still loading.'
 async function refreshSituation() {
   const eat = new Date(Date.now() + 3 * 3600_000).toISOString().slice(11, 16)
-  const checks = await Promise.all(SERVICES.map(async ([name, url]) => {
+  const checks = await Promise.all(SERVICES.map(async ([name, url, where]) => {
     const t = Date.now()
-    try { const r = await fetch(url, { redirect: 'manual', signal: AbortSignal.timeout(8000) }); return `${name}: ${r.status < 500 ? 'up' : 'DOWN'} (${r.status}, ${Date.now() - t} ms)` }
-    catch (e) { return `${name}: DOWN (${e.name === 'TimeoutError' ? 'timed out' : 'unreachable'})` }
+    try {
+      const r = await fetch(url, { redirect: 'manual', signal: AbortSignal.timeout(8000) })
+      let why = ''
+      if (r.status >= 500) { try { const j = await r.json(); if (j?.db?.connected === false) why = ', database not connected' } catch { /* not json */ } }
+      return `${name} [${where}]: ${r.status < 500 ? 'up' : 'DOWN'} (${r.status}${why}, ${Date.now() - t} ms)`
+    } catch (e) { return `${name} [${where}]: DOWN (${e.name === 'TimeoutError' ? 'timed out' : 'unreachable'})` }
   }))
   const mem = await sh('free', ['-m']); const m = mem.split('\n')[1]?.split(/\s+/) ?? []; const sw = mem.split('\n')[2]?.split(/\s+/) ?? []
   const disk = (await sh('df', ['-h', '/'])).split('\n')[1]?.split(/\s+/) ?? []
@@ -70,7 +75,7 @@ async function refreshSituation() {
   situation = [
     `Live situation at ${eat} EAT (checked every minute by the bridge on the VM).`,
     `Services: ${checks.join('; ')}.`,
-    `VM safari-core (Hetzner CX23): memory ${m[6] || '?'} MB available of ${m[1] || '?'} MB; swap used ${sw[2] || '?'} of ${sw[1] || '?'} MB; disk ${disk[4] || '?'} used, ${disk[3] || '?'} free.`,
+    `VM safari-core (Hetzner CX23; hosts only the Core, Paperclip, the bridge and the video tunnel — NOT HQ, Studio or KaribuLink): memory ${m[6] || '?'} MB available of ${m[1] || '?'} MB; swap used ${sw[2] || '?'} of ${sw[1] || '?'} MB; disk ${disk[4] || '?'} used, ${disk[3] || '?'} free.`,
     `Containers: ${containers.replace(/\n/g, '; ') || 'none'}. Services on the VM: ${unitState.join(', ')}.`,
     `Agent runs today: ${Object.entries(byAgent).map(([a, s]) => `${a} ${s.runs} runs, ${s.failed} failed, about $${s.cost.toFixed(2)} equivalent (paid by subscription)`).join('; ') || 'none yet'}.`,
     `Agent proposals waiting for the founder: ${proposals.map(p => p.name).join(', ') || 'none'}.`,
