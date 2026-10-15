@@ -1068,6 +1068,56 @@
   --surface-3: 40 20% 82%;
 }
 
+/* Safari Core (v13 sand): ink on cold-pressed sand, soft 3D cards. Contrast on --background (88% L):
+   computed: foreground 11.3:1 · muted-foreground 4.9:1 · primary 5.0:1 · teal 5.7:1 · info 5.2:1 (bg) */
+.safari-core {
+  --background: 42 26% 88%;
+  --foreground: 40 22% 15%;
+  --card: 42 28% 91%;
+  --card-foreground: 40 22% 15%;
+  --popover: 42 30% 93%;
+  --popover-foreground: 40 22% 15%;
+  --primary: 37 84% 28%;
+  --primary-foreground: 42 30% 95%;
+  --secondary: 42 26% 84%;
+  --secondary-foreground: 40 22% 15%;
+  --muted: 42 24% 84%;
+  --muted-foreground: 40 14% 36%;
+  --accent: 42 26% 84%;
+  --accent-foreground: 40 22% 15%;
+  --destructive: 15 62% 40%;
+  --destructive-foreground: 42 30% 95%;
+  --border: 40 20% 78%;
+  --input: 40 20% 78%;
+  --ring: 37 84% 28%;
+  --void-cyan: 192 63% 27%;
+  --void-mint: 192 63% 27%;
+  --void-amber: 37 84% 28%;
+  --void-violet: 281 32% 44%;
+  --void-crimson: 15 62% 43%;
+  --success: 192 63% 27%;
+  --success-foreground: 42 30% 95%;
+  --warning: 37 84% 28%;
+  --warning-foreground: 42 30% 95%;
+  --info: 207 50% 36%;
+  --info-foreground: 42 30% 95%;
+  --surface-0: 42 26% 88%;
+  --surface-1: 42 28% 91%;
+  --surface-2: 42 26% 84%;
+  --surface-3: 40 20% 78%;
+  --text-2xs: 0.75rem;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-azeret), ui-monospace, monospace;
+}
+.safari-core body::before {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: .5; mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23g)'/%3E%3C/svg%3E");
+}
+.safari-core .bg-card {
+  box-shadow: -6px -6px 14px hsla(42, 46%, 99%, .9), 7px 7px 16px hsla(40, 20%, 54%, .42);
+  border-color: transparent;
+}
+
 /* Themed backgrounds */
 .synthwave-bg {
   background-image:
