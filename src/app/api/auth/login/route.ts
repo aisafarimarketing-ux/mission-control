@@ -10,7 +10,8 @@ export async function POST(request: Request) {
     const rateCheck = loginLimiter(request)
     if (rateCheck) return rateCheck
 
-    const { username, password } = await request.json()
+    const { username: rawUsername, password, remember } = await request.json()
+    const username = typeof rawUsername === 'string' ? rawUsername.trim() : rawUsername
 
     if (!username || !password) {
       return NextResponse.json({ error: 'Username and password are required' }, { status: 400 })
@@ -38,7 +39,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
     }
 
-    const { token, expiresAt } = createSession(user.id, ipAddress, userAgent, user.workspace_id)
+    // 'Keep me signed in on this device' → 90 days; otherwise the default 7 days
+    const { token, expiresAt } = createSession(user.id, ipAddress, userAgent, user.workspace_id, remember === true ? 90 * 24 * 60 * 60 : undefined)
 
     logAuditEvent({ action: 'login', actor: user.username, actor_id: user.id, ip_address: ipAddress, user_agent: userAgent })
 
