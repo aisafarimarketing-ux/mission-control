@@ -25,8 +25,10 @@ export function getOnboardingSessionDecision(
     return { shouldOpen: true, replayFromStart: false }
   }
 
+  // Safari Core: once the founder has completed or skipped setup, land straight on the Core every session.
+  // (Upstream replays the wizard for admins on each fresh session.)
   if (params.completed || params.skipped) {
-    return { shouldOpen: true, replayFromStart: true }
+    return { shouldOpen: false, replayFromStart: false }
   }
 
   return { shouldOpen: false, replayFromStart: false }
