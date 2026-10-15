@@ -25,7 +25,7 @@ export const SNAPSHOT = {
   ] as { title: string; items: { label: string; icon: string; target: string; color?: string; badge?: number }[] }[],
   kpis: [
     { value: '5', label: 'workers on shift', icon: 'core', color: '--a-work' },
-    { value: '6', label: 'services watched · 30 s', icon: 'beat', color: '--a-sec' },
+    { value: '6', label: 'services watched · 30 s', icon: 'beat', color: '--a-sec' },
     { value: '25', label: 'radar routes live', icon: 'radar', color: '--a-radar' },
     { value: '4,890', label: 'contacts on the desk', icon: 'ledger', color: '--a-grow' },
   ],
