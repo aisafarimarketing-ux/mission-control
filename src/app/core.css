@@ -353,3 +353,7 @@
 .core-root .talk-engine{display:flex;border-radius:10px;overflow:hidden;box-shadow:inset 2px 2px 5px var(--sh-hi),inset -2px -2px 5px var(--sh-lo)}
 .core-root .talk-engine button{padding:9px 12px;border:0;background:transparent;color:var(--ink-3);font:600 12px var(--mono);letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
 .core-root .talk-engine button.on{background:var(--card-hi);color:var(--ink);box-shadow:-2px -2px 5px var(--sh-lo),3px 3px 6px var(--sh-hi)}
+.core-root .mbox{display:grid;gap:6px}
+.core-root .mbox-switch{display:flex;align-items:center;gap:6px;font:600 13px var(--mono);text-transform:uppercase;color:var(--ink-2);min-height:44px}
+.core-root .mbox-switch input{width:22px;height:22px;accent-color:var(--a-work)}
+.core-root .dict-add select{padding:12px 10px;border-radius:10px;border:1px solid var(--hair);background:var(--card-hi);color:var(--ink);font:400 16px var(--sans)}
