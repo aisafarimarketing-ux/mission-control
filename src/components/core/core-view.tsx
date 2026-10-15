@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { TalkPanel } from './talk-panel'
 import { useNavigateToPanel } from '@/lib/navigation'
 import { useMissionControl } from '@/store'
 import { SNAPSHOT } from './core-snapshot'
@@ -253,6 +254,7 @@ export function CoreView() {
   const cvRef = useRef<HTMLCanvasElement>(null)
   const [surface, setSurface] = useState<Surface>(DEFAULT_SURFACE)
   const [popOpen, setPopOpen] = useState(false)
+  const [talk, setTalk] = useState<(typeof SNAPSHOT.workers)[number] | null>(null)
   const [full, setFull] = useState(false) // phones open on the heart alone; 'Show everything' reveals the rest
 
   useEffect(() => {
@@ -390,8 +392,8 @@ export function CoreView() {
           <aside className="rail left">
             <h4>On shift now <i /></h4>
             {SNAPSHOT.workers.map(w => (
-              <div key={w.name} className="wcard" style={v(w.color)} onClick={() => go(w.target)}>
-                <span className="ic">{ICONS[w.icon]}</span>
+              <div key={w.name} className="wcard" style={v(w.color)} onClick={() => (w.agent ? setTalk(w) : go(w.target))}>
+                <span className="ic">{w.agent ? <img src={`/agents/${w.agent}-avatar.webp`} alt="" /> : ICONS[w.icon]}</span>
                 <span className="tx"><b>{w.name}</b><small>{w.role}</small></span>
                 <span className="st"><u className={w.live ? 'pulse' : undefined} />{w.status}</span>
               </div>
@@ -431,6 +433,10 @@ export function CoreView() {
           </aside>
         </div>
       </div>
+
+      {talk?.agent && (
+        <TalkPanel agent={talk.agent} name={talk.name.replace(' · Claude', '')} role={talk.role} voice={(talk.voice as 'M' | 'F') || 'M'} color={talk.color} onClose={() => setTalk(null)} />
+      )}
 
       <div className="bot">
         <span className="ok"><u />{SNAPSHOT.bar.gates}</span>

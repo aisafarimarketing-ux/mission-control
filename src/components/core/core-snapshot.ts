@@ -30,11 +30,11 @@ export const SNAPSHOT = {
     { value: '4,890', label: 'contacts on the desk', icon: 'ledger', color: '--a-grow' },
   ],
   workers: [
-    { name: 'Radar Scout', role: 'finder · writer · seller', status: '25 rt', icon: 'gent', color: '--a-radar', live: true, target: `${HQ}/radar` },
-    { name: 'Reply Watch', role: 'replies → cards · 07–20 EAT', status: '1 m', icon: 'lady', color: '--a-grow', live: true, target: `${HQ}/contacts` },
-    { name: 'Mail Sync', role: 'jmap inbox · continuous', status: '2 m', icon: 'gent', color: '--a-health', live: true, target: `${HQ}/mail` },
-    { name: 'Watchman', role: '6 services · incident ladder', status: '30 s', icon: 'lady', color: '--a-sec', live: true, target: `${HQ}/control` },
-    { name: 'Kamanda · Claude', role: 'chief of staff · one queue', status: 'on', icon: 'gent', color: '--a-work', live: true, target: 'agents' },
+    { name: 'Radar Scout', agent: 'radar-scout', voice: 'M', role: 'finder · writer · seller', status: '25 rt', icon: 'gent', color: '--a-radar', live: true, target: `${HQ}/radar` },
+    { name: 'Reply Watch', agent: 'reply-watch', voice: 'F', role: 'replies → cards · 07–20 EAT', status: '1 m', icon: 'lady', color: '--a-grow', live: true, target: `${HQ}/contacts` },
+    { name: 'Mail Sync', agent: 'mail-sync', voice: 'M', role: 'jmap inbox · continuous', status: '2 m', icon: 'gent', color: '--a-health', live: true, target: `${HQ}/mail` },
+    { name: 'Watchman', agent: 'watchman', voice: 'F', role: '6 services · incident ladder', status: '30 s', icon: 'lady', color: '--a-sec', live: true, target: `${HQ}/control` },
+    { name: 'Kamanda · Claude', agent: 'kamanda', voice: 'M', role: 'chief of staff · one queue', status: 'on', icon: 'gent', color: '--a-work', live: true, target: 'agents' },
     { name: 'Humans', role: 'clean task in · clean done', status: 'team', icon: 'humans', color: '--a-build', live: false, target: 'users' },
   ],
   outputs: [

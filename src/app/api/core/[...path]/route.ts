@@ -1,0 +1,32 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { requireRole } from '@/lib/auth'
+
+// Founder-only proxy from the Core UI to the talk bridge on the VM host (core-bridge/bridge.mjs).
+const ALLOWED = new Set(['talk', 'ledger', 'proposals', 'proposals/decide', 'roster'])
+
+async function forward(request: NextRequest, path: string[], method: 'GET' | 'POST') {
+  const auth = requireRole(request, 'admin')
+  if ('error' in auth) return NextResponse.json({ error: auth.error }, { status: auth.status })
+  const sub = path.join('/')
+  if (!ALLOWED.has(sub)) return NextResponse.json({ error: 'not found' }, { status: 404 })
+  const base = process.env.CORE_BRIDGE_URL, key = process.env.CORE_BRIDGE_KEY
+  if (!base || !key) return NextResponse.json({ error: 'The talk bridge is not configured on this server yet.' }, { status: 503 })
+  try {
+    const res = await fetch(`${base}/${sub}`, {
+      method,
+      headers: { 'x-bridge-key': key, 'content-type': 'application/json' },
+      body: method === 'POST' ? await request.text() : undefined,
+      signal: AbortSignal.timeout(200_000),
+    })
+    return NextResponse.json(await res.json(), { status: res.status })
+  } catch {
+    return NextResponse.json({ error: 'The agents are unreachable right now. Watchman will flag it if it persists.' }, { status: 502 })
+  }
+}
+
+export async function GET(request: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
+  return forward(request, (await params).path, 'GET')
+}
+export async function POST(request: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
+  return forward(request, (await params).path, 'POST')
+}
