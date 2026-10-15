@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireRole } from '@/lib/auth'
 
 // Founder-only proxy from the Core UI to the talk bridge on the VM host (core-bridge/bridge.mjs).
-const ALLOWED = new Set(['talk', 'ledger', 'situation', 'proposals', 'proposals/decide', 'roster'])
+const ALLOWED = new Set(['talk', 'ledger', 'situation', 'proposals', 'proposals/decide', 'roster', 'lexicon', 'voices'])
 
 async function forward(request: NextRequest, path: string[], method: 'GET' | 'POST') {
   const auth = requireRole(request, 'admin')

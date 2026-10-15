@@ -9,39 +9,14 @@ import { apiFetch, ApiError } from '@/lib/api-client'
 type Line = { who: 'you' | 'agent'; text: string }
 type Proposal = { id: string; name: string; role: string; playbook: string; look?: string; why?: string }
 type SR = { continuous: boolean; interimResults: boolean; lang: string; start(): void; stop(): void; onresult: ((e: { resultIndex: number; results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }> }) => void) | null; onend: (() => void) | null; onerror: ((e: { error: string }) => void) | null }
-type Kokoro = { generate(text: string, o: { voice: string; speed?: number }): Promise<{ audio: Float32Array; sampling_rate: number }> }
-
-// Each agent's Kokoro voice (all 28 English voices live in our copy; change here to recast).
-const VOICES: Record<string, string> = { kamanda: 'bm_george', 'reply-watch': 'af_heart', watchman: 'bf_emma', 'radar-scout': 'am_michael', 'mail-sync': 'am_eric' }
-
-// One shared voice engine per page: our patched kokoro-js bundle + our model files (never huggingface.co / a CDN).
-let engine: Promise<Kokoro> | null = null
-const progressListeners = new Set<(pct: number) => void>()
-function loadVoice(): Promise<Kokoro> {
-  engine ??= (async () => {
-    const mod = await import(/* webpackIgnore: true */ /* turbopackIgnore: true */ '/vendor/kokoro-1.2.1-safari.js' as string)
-    const nav = navigator as Navigator & { gpu?: { requestAdapter(): Promise<unknown> } }
-    const gpu = !!(nav.gpu && (await nav.gpu.requestAdapter().catch(() => null)))
-    const seen: Record<string, [number, number]> = {}
-    return mod.KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX', {
-      dtype: gpu ? 'fp32' : 'q8', device: gpu ? 'webgpu' : 'wasm',
-      progress_callback: (p: { status: string; file?: string; loaded?: number; total?: number }) => {
-        if (p.status !== 'progress' || !p.file || !p.total) return
-        seen[p.file] = [p.loaded || 0, p.total]
-        const [l, t] = Object.values(seen).reduce((a, [x, y]) => [a[0] + x, a[1] + y], [0, 0])
-        progressListeners.forEach(f => f(Math.round((100 * l) / t)))
-      },
-    })
-  })()
-  engine.catch(() => { engine = null })
-  return engine
-}
+import { VOICES, voiceLabel, DEFAULT_VOICE, loadVoice, progressListeners, respellForBrowser, audioContext, type Kokoro } from './voice'
 
 const MicIcon = () => (
   <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8.5 21h7" /></svg>
 )
 
-export function TalkPanel({ agent, name, role, voice, color, onClose }: { agent: string; name: string; role: string; voice: 'M' | 'F'; color: string; onClose: () => void }) {
+export function TalkPanel({ agent, name, role, voice, color, onClose, onDictionary }: { agent: string; name: string; role: string; voice: 'M' | 'F'; color: string; onClose: () => void; onDictionary: () => void }) {
+  const [pick, setPick] = useState(DEFAULT_VOICE[agent] || (voice === 'F' ? 'af_heart' : 'bm_george'))
   const [lines, setLines] = useState<Line[]>([])
   const [busy, setBusy] = useState(false)
   const [speaking, setSpeaking] = useState(false)
@@ -68,6 +43,13 @@ export function TalkPanel({ agent, name, role, voice, color, onClose }: { agent:
 
   useEffect(() => { logRef.current?.scrollTo({ top: logRef.current.scrollHeight }) }, [lines, interim])
 
+  useEffect(() => { apiFetch<Record<string, string>>('/api/core/voices').then(p => { if (p[agent]) setPick(p[agent]) }).catch(() => {}) }, [agent])
+  async function choose(v: string) {
+    setPick(v)
+    apiFetch('/api/core/voices', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ agent, voice: v }) }).catch(() => setNote('That voice choice did not save.'))
+    if (tts.current) { stopSpeaking(); const id = ++turnId.current; say(`Karibu. This is how I sound now.`, id) }
+  }
+
   // Start loading our voice as soon as the panel opens (cached by the browser after the first time).
   useEffect(() => {
     const onPct = (p: number) => setVoicePct(p < 100 ? p : null)
@@ -76,11 +58,7 @@ export function TalkPanel({ agent, name, role, voice, color, onClose }: { agent:
     return () => { progressListeners.delete(onPct) }
   }, [])
 
-  function audio() {
-    ctx.current ??= new AudioContext()
-    if (ctx.current.state === 'suspended') ctx.current.resume()
-    return ctx.current
-  }
+  function audio() { ctx.current = audioContext(); return ctx.current }
   function setTalking(on: boolean) { speakingRef.current = on; setSpeaking(on) }
 
   function browserVoice() {
@@ -93,7 +71,7 @@ export function TalkPanel({ agent, name, role, voice, color, onClose }: { agent:
   function say(sentence: string, id: number) {
     const s = sentence.trim(); if (!s) return
     pending.current++; setTalking(true)
-    const made = tts.current ? tts.current.generate(s, { voice: VOICES[agent] || (voice === 'F' ? 'af_heart' : 'bm_george') }).catch(() => null) : Promise.resolve(null)
+    const made = tts.current ? tts.current.generate(s, { voice: pick }).catch(() => null) : Promise.resolve(null)
     chain.current = chain.current.then(async () => {
       const raw = await made
       if (id !== turnId.current) return
@@ -103,7 +81,7 @@ export function TalkPanel({ agent, name, role, voice, color, onClose }: { agent:
           const ac = audio(); const buf = ac.createBuffer(1, raw.audio.length, raw.sampling_rate); buf.copyToChannel(new Float32Array(raw.audio), 0)
           const src = ac.createBufferSource(); src.buffer = buf; src.connect(ac.destination); src.onended = () => done(); source.current = src; src.start()
         } else {
-          const u = new SpeechSynthesisUtterance(s); const v = browserVoice(); if (v) u.voice = v
+          const u = new SpeechSynthesisUtterance(respellForBrowser(s)); const v = browserVoice(); if (v) u.voice = v
           u.onend = () => done(); u.onerror = () => done(); speechSynthesis.speak(u)
         }
       })
@@ -219,7 +197,15 @@ export function TalkPanel({ agent, name, role, voice, color, onClose }: { agent:
       <div className="talk-side">
         <header>
           <div><b>{name}</b><small>{role}</small></div>
-          <button type="button" className="talk-x" onClick={onClose} aria-label="Close">Close</button>
+          <div className="talk-tools">
+            <label className="talk-voice"><span>Voice</span>
+              <select id="talk-voice" value={pick} onChange={e => choose(e.target.value)} aria-label={`${first}'s voice`}>
+                {VOICES.map(v => <option key={v} value={v}>{voiceLabel(v)}</option>)}
+              </select>
+            </label>
+            <button type="button" className="talk-x" onClick={onDictionary}>Dictionary</button>
+            <button type="button" className="talk-x" onClick={onClose} aria-label="Close">Close</button>
+          </div>
         </header>
         <div className="talk-log" ref={logRef}>
           {lines.length === 0 && <p className="talk-hint">Tap the microphone and speak, or type below. Talk over {first} any time; they stop and listen.</p>}

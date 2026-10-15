@@ -25,6 +25,10 @@ const SESSIONS = path.join(HOME, 'sessions.json')
 const LEDGER = path.join(HOME, 'ledger.jsonl')
 const PROPOSALS = path.join(HOME, 'proposals.json')
 const ROSTER = path.join(HOME, 'roster.json')
+const LEXICON = path.join(HOME, 'lexicon.json')
+const VOICE_PICKS = path.join(HOME, 'voices.json')
+// First run: start the pronunciation dictionary from the shipped seed (safari circuit names, Swahili rules).
+if (!fs.existsSync(LEXICON)) fs.copyFileSync(path.join(path.dirname(new URL(import.meta.url).pathname), 'lexicon-seed.json'), LEXICON)
 const readJson = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')) } catch { return d } }
 const writeJson = (f, v) => fs.writeFileSync(f, JSON.stringify(v, null, 1))
 const ledgerRows = () => fs.existsSync(LEDGER) ? fs.readFileSync(LEDGER, 'utf8').trim().split('\n').filter(Boolean).map(l => { try { return JSON.parse(l) } catch { return null } }).filter(Boolean) : []
@@ -182,6 +186,30 @@ http.createServer(async (req, res) => {
       return send(res, 200, { ok: true, joined: !!approve, agent: p })
     }
     if (req.method === 'GET' && url.pathname === '/roster') return send(res, 200, readJson(ROSTER, {}))
+    // Pronunciation dictionary: { entries: { "<word or phrase, lowercase>": { ipa?, sayLike?, kind?, by?, at? } } }
+    if (url.pathname === '/lexicon') {
+      const lex = readJson(LEXICON, { entries: {} })
+      if (req.method === 'GET') return send(res, 200, lex)
+      const { word, ipa, sayLike, kind, remove } = await body(req)
+      const key = String(word || '').trim().toLowerCase().replace(/\s+/g, ' ')
+      if (!key || key.length > 60) return send(res, 400, { error: 'Give the word or phrase (up to 60 letters).' })
+      if (remove) delete lex.entries[key]
+      else {
+        if (!ipa && !sayLike) return send(res, 400, { error: 'Add how it should sound.' })
+        lex.entries[key] = { ...(ipa ? { ipa: String(ipa).slice(0, 120) } : {}), ...(sayLike ? { sayLike: String(sayLike).slice(0, 120) } : {}), kind: kind || lex.entries[key]?.kind || 'word', by: 'founder', at: new Date().toISOString() }
+      }
+      writeJson(LEXICON, lex)
+      return send(res, 200, { ok: true, entries: lex.entries })
+    }
+    // Which of the 28 voices each agent uses (the founder's choice, shared across devices).
+    if (url.pathname === '/voices') {
+      const picks = readJson(VOICE_PICKS, {})
+      if (req.method === 'GET') return send(res, 200, picks)
+      const { agent, voice } = await body(req)
+      if (!/^[a-z0-9-]{2,40}$/.test(agent || '') || !/^[ab][fm]_[a-z]+$/.test(voice || '')) return send(res, 400, { error: 'bad voice choice' })
+      picks[agent] = voice; writeJson(VOICE_PICKS, picks)
+      return send(res, 200, { ok: true, picks })
+    }
     send(res, 404, { error: 'not found' })
   } catch (e) { if (!res.headersSent) send(res, 500, { error: String(e.message || e) }); else res.end() }
 }).listen(PORT, HOST, () => console.log(`core-bridge on ${HOST}:${PORT} (model ${MODEL}, warm max ${WARM_MAX})`))

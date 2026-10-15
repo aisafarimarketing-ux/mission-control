@@ -20,6 +20,7 @@ export const SNAPSHOT = {
       { label: 'Builder', icon: 'build', target: 'github', color: '--a-build', badge: 2 },
     ] },
     { title: 'System', items: [
+      { label: 'Dictionary', icon: 'ledger', target: 'dictionary' },
       { label: 'Settings', icon: 'gear', target: 'settings' },
     ] },
   ] as { title: string; items: { label: string; icon: string; target: string; color?: string; badge?: number }[] }[],
