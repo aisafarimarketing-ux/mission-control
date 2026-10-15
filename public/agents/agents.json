@@ -1,0 +1,255 @@
+{
+ "note": "Safari Core agent looks. Pick a free look (assignedTo null) when adding a worker, then set assignedTo.",
+ "looks": [
+  {
+   "id": "kamanda",
+   "group": "African",
+   "gender": "M",
+   "look": "Dark-skinned man, late 40s, grey-flecked beard; long warm-grey wool coat over white ceramic chestplate with one gold seam.",
+   "assignedTo": "Kamanda · Claude",
+   "image": "/agents/kamanda.webp",
+   "avatar": "/agents/kamanda-avatar.webp",
+   "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
+  },
+  {
+   "id": "reply-watch",
+   "group": "Asian",
+   "gender": "F",
+   "look": "East Asian woman, early 30s; sculpted white ceramic hood with a black brow seam over a black high-neck suit.",
+   "assignedTo": "Reply Watch",
+   "image": "/agents/reply-watch.webp",
+   "avatar": "/agents/reply-watch-avatar.webp",
+   "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
+  },
+  {
+   "id": "radar-scout",
+   "group": "Asian",
+   "gender": "M",
+   "look": "South Asian man, early 30s; charcoal technical knit suit with black articulated joints, visor helmet under his arm.",
+   "assignedTo": "Radar Scout",
+   "image": "/agents/radar-scout.webp",
+   "avatar": "/agents/radar-scout-avatar.webp",
+   "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
+  },
+  {
+   "id": "watchman",
+   "group": "European",
+   "gender": "F",
+   "look": "Northern European woman, mid 40s, silver crop; white ceramic shoulder armour and gold-seamed collar over a charcoal coat.",
+   "assignedTo": "Watchman",
+   "image": "/agents/watchman.webp",
+   "avatar": "/agents/watchman-avatar.webp",
+   "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
+  },
+  {
+   "id": "mail-sync",
+   "group": "Latino",
+   "gender": "M",
+   "look": "Latino man, mid 30s; white ceramic panels along jaw and temple, ceramic collar over a warm-grey knit.",
+   "assignedTo": "Mail Sync",
+   "image": "/agents/mail-sync.webp",
+   "avatar": "/agents/mail-sync-avatar.webp",
+   "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
+  },
+  {
+   "id": "a06",
+   "group": "African",
+   "gender": "F",
+   "look": "A Kenyan woman in her late 20s with deep brown skin and a short natural crop of tight curls, warm confident half-smile. She wears a sculpted matte white ceramic collar inspired by layered Maasai bead necklaces, rendered as fine concentric ceramic rings with one thin gold ring, over a charcoal high-neck fitted dress.",
+   "assignedTo": null,
+   "image": "/agents/a06.webp",
+   "avatar": "/agents/a06-avatar.webp",
+   "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
+  },
+  {
+   "id": "a07",
+   "group": "African",
+   "gender": "F",
+   "look": "A Sudanese-Nubian woman in her early 30s with very dark ebony skin and a full rounded afro, serene direct gaze, small pearl drop earrings. She wears a single strand of pearls and a warm-grey draped wool tunic with sculpted white ceramic shoulder plates.",
+   "assignedTo": null,
+   "image": "/agents/a07.webp",
+   "avatar": "/agents/a07-avatar.webp",
+   "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
+  },
+  {
+   "id": "a08",
+   "group": "African",
+   "gender": "F",
+   "look": "A Somali woman in her mid 20s wearing an elegant couture hijab in matte ceramic-white crepe that frames her face, soft composed smile, thin round gold-rim glasses. Over it a long warm-grey structured coat with a white ceramic segmented collar beneath the hijab drape.",
+   "assignedTo": null,
+   "image": "/agents/a08.webp",
+   "avatar": "/agents/a08-avatar.webp",
+   "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
+  },
+  {
+   "id": "a09",
+   "group": "African",
+   "gender": "F",
+   "look": "A Nigerian woman in her mid 30s with rich brown skin and long knotless braids gathered into a high sculptural bun, poised and decisive expression. She wears a charcoal tailored jacket with a white ceramic chest panel engraved with a subtle geometric pattern, one thin gold seam.",
+   "assignedTo": null,
+   "image": "/agents/a09.webp",
+   "avatar": "/agents/a09-avatar.webp",
+   "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
+  },
+  {
+   "id": "a10",
+   "group": "African",
+   "gender": "F",
+   "look": "An Ethiopian woman in her late 20s with warm brown skin and soft defined curls to the shoulder, gentle intelligent gaze. She wears a white ceramic headpiece band at the hairline like a delicate band of segmented plates, and a flowing warm-grey high-neck dress with a white ceramic belt.",
+   "assignedTo": null,
+   "image": "/agents/a10.webp",
+   "avatar": "/agents/a10-avatar.webp",
+   "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
+  },
+  {
+   "id": "a11",
+   "group": "African",
+   "gender": "F",
+   "look": "A Ghanaian woman in her early 40s with deep brown skin and a short sleek tapered natural cut, calm commanding presence. She wears a long charcoal wool cape-coat over a matte white ceramic breastplate with fine hairline seams and a single brushed-gold line.",
+   "assignedTo": null,
+   "image": "/agents/a11.webp",
+   "avatar": "/agents/a11-avatar.webp",
+   "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
+  },
+  {
+   "id": "a12",
+   "group": "African",
+   "gender": "F",
+   "look": "A Tanzanian woman in her mid 20s with dark brown skin and shoulder-length locs tied back, bright alert eyes and an easy smile. She wears a fitted warm-grey technical knit suit with white ceramic articulated shoulder and forearm guards.",
+   "assignedTo": null,
+   "image": "/agents/a12.webp",
+   "avatar": "/agents/a12-avatar.webp",
+   "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
+  },
+  {
+   "id": "a13",
+   "group": "African",
+   "gender": "M",
+   "look": "A Senegalese man in his early 30s with very dark skin, tall and lean, clean-shaven with a close fade, calm proud stance. He wears wide pleated white trousers and a long open warm-grey wool robe-coat over a matte white ceramic chest plate with layered ceramic collar rings.",
+   "assignedTo": null,
+   "image": "/agents/a13.webp",
+   "avatar": "/agents/a13-avatar.webp",
+   "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
+  },
+  {
+   "id": "a14",
+   "group": "African",
+   "gender": "M",
+   "look": "A Ugandan man in his late 30s with deep brown skin and a short beard, thoughtful steady expression. He wears a charcoal high-collar coat with a white ceramic visor pushed up onto his forehead like goggles, and ceramic plates at the collar.",
+   "assignedTo": null,
+   "image": "/agents/a14.webp",
+   "avatar": "/agents/a14-avatar.webp",
+   "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
+  },
+  {
+   "id": "b06",
+   "group": "Asian",
+   "gender": "F",
+   "look": "A Korean woman in her late 20s with a sleek chin-length bob, fair skin, cool composed gaze. Fine matte white ceramic panels are seamlessly integrated along her temple, cheekbone and behind the ear with hairline seams; she wears a black high-neck fitted suit with one thin white piping line.",
+   "assignedTo": null,
+   "image": "/agents/b06.webp",
+   "avatar": "/agents/b06-avatar.webp",
+   "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
+  },
+  {
+   "id": "b07",
+   "group": "Asian",
+   "gender": "F",
+   "look": "A Japanese woman in her early 30s with long straight black hair worn in a low ponytail, serene minimal expression. She wears a sculpted white ceramic high collar that rises to the jaw, over a warm-grey wrap coat with clean modern lines.",
+   "assignedTo": null,
+   "image": "/agents/b07.webp",
+   "avatar": "/agents/b07-avatar.webp",
+   "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
+  },
+  {
+   "id": "b08",
+   "group": "Asian",
+   "gender": "F",
+   "look": "A Filipina woman in her mid 20s with warm golden-tan skin and wavy shoulder-length dark hair, friendly bright smile. She wears a fitted charcoal technical knit bodysuit with glossy white ceramic shoulder caps and a small white light-slot on the chest.",
+   "assignedTo": null,
+   "image": "/agents/b08.webp",
+   "avatar": "/agents/b08-avatar.webp",
+   "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
+  },
+  {
+   "id": "b09",
+   "group": "Asian",
+   "gender": "F",
+   "look": "A Vietnamese woman in her early 30s with long hair in a single braid over one shoulder, quiet attentive gaze. She wears a modern high-neck tunic in warm grey with white ceramic panels along the sleeves and collar.",
+   "assignedTo": null,
+   "image": "/agents/b09.webp",
+   "avatar": "/agents/b09-avatar.webp",
+   "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
+  },
+  {
+   "id": "b10",
+   "group": "Asian",
+   "gender": "F",
+   "look": "An Indian woman in her late 20s with warm brown skin, long dark hair swept back, confident composed expression. She wears a charcoal structured jacket with a white ceramic sash plate draped across one shoulder, one thin gold seam.",
+   "assignedTo": null,
+   "image": "/agents/b10.webp",
+   "avatar": "/agents/b10-avatar.webp",
+   "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
+  },
+  {
+   "id": "b11",
+   "group": "Asian",
+   "gender": "F",
+   "look": "A Malaysian Malay woman in her early 30s wearing a couture hijab in warm sand-grey satin, soft confident smile. Over it a white ceramic segmented collar and a long charcoal tailored coat.",
+   "assignedTo": null,
+   "image": "/agents/b11.webp",
+   "avatar": "/agents/b11-avatar.webp",
+   "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
+  },
+  {
+   "id": "b12",
+   "group": "Asian",
+   "gender": "M",
+   "look": "A Chinese man in his mid 30s with short neat black hair and rimless glasses, calm analytical expression. He wears a charcoal tailored suit with a matte white ceramic exoskeleton spine visible at the high collar and white ceramic forearm bracers.",
+   "assignedTo": null,
+   "image": "/agents/b12.webp",
+   "avatar": "/agents/b12-avatar.webp",
+   "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
+  },
+  {
+   "id": "b13",
+   "group": "Asian",
+   "gender": "M",
+   "look": "A Japanese man in his late 20s with tousled black hair, lean build, focused expression. He wears a matte charcoal technical knit suit with glossy black articulated joints and holds a white ceramic full-face visor helmet at his side.",
+   "assignedTo": null,
+   "image": "/agents/b13.webp",
+   "avatar": "/agents/b13-avatar.webp",
+   "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
+  },
+  {
+   "id": "c06",
+   "group": "European",
+   "gender": "F",
+   "look": "A Scandinavian woman in her late 20s with platinum-blonde hair in a sleek low bun, pale skin with freckles, calm clear blue-grey eyes. Fine matte white ceramic panels frame her face along the hairline and jaw; white ceramic segmented neck collar over a warm-grey knit high-neck.",
+   "assignedTo": null,
+   "image": "/agents/c06.webp",
+   "avatar": "/agents/c06-avatar.webp",
+   "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
+  },
+  {
+   "id": "c07",
+   "group": "European",
+   "gender": "F",
+   "look": "An Italian woman in her early 40s with dark wavy hair to the shoulder and olive skin, warm intelligent expression. She wears a long charcoal wool coat with a sculpted white ceramic bodice beneath, one thin brushed-gold seam.",
+   "assignedTo": null,
+   "image": "/agents/c07.webp",
+   "avatar": "/agents/c07-avatar.webp",
+   "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
+  },
+  {
+   "id": "c09",
+   "group": "European",
+   "gender": "F",
+   "look": "A French woman in her mid 20s with chestnut hair in a loose low chignon, soft refined features, thoughtful gaze. She wears a warm-grey structured cape over white ceramic shoulder plates and a high ceramic collar.",
+   "assignedTo": null,
+   "image": "/agents/c09.webp",
+   "avatar": "/agents/c09-avatar.webp",
+   "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
+  }
+ ]
+}
