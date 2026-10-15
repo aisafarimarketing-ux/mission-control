@@ -15,3 +15,6 @@ GET /api/gateways/control
 POST /api/gateways/control
 GET /api/mcp-audit/verify
 POST /api/hermes/events
+# Safari Core: founder-only proxy to the talk bridge on the VM (not a public API)
+GET /api/core/{path}
+POST /api/core/{path}
