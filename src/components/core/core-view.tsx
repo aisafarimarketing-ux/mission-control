@@ -253,6 +253,7 @@ export function CoreView() {
   const cvRef = useRef<HTMLCanvasElement>(null)
   const [surface, setSurface] = useState<Surface>(DEFAULT_SURFACE)
   const [popOpen, setPopOpen] = useState(false)
+  const [full, setFull] = useState(false) // phones open on the heart alone; 'Show everything' reveals the rest
 
   useEffect(() => {
     try { const saved = localStorage.getItem(SURFACE_KEY); if (saved) setSurface({ ...DEFAULT_SURFACE, ...JSON.parse(saved) }) } catch { /* storage blocked */ }
@@ -263,6 +264,20 @@ export function CoreView() {
   useEffect(() => {
     if (!rootRef.current || !mainRef.current || !cvRef.current) return
     return startSilk(rootRef.current, mainRef.current, cvRef.current)
+  }, [])
+  useEffect(() => {
+    // Phone turned sideways: lay the page out at 1280px and let the phone scale it, so it gets the real desktop bowtie.
+    const meta = document.querySelector<HTMLMetaElement>('meta[name="viewport"]')
+    if (!meta) return
+    const original = meta.content
+    const land = matchMedia('(orientation: landscape)')
+    const apply = () => {
+      const phone = Math.min(screen.width, screen.height) < 500 && matchMedia('(pointer: coarse)').matches
+      meta.content = phone && land.matches ? 'width=1280, viewport-fit=cover' : original
+    }
+    apply()
+    land.addEventListener('change', apply)
+    return () => { land.removeEventListener('change', apply); meta.content = original }
   }, [])
   useEffect(() => {
     if (!popOpen) return
@@ -281,7 +296,7 @@ export function CoreView() {
   return (
     <div
       ref={rootRef}
-      className="core-root"
+      className={`core-root${full ? ' full' : ''}`}
       data-tone={surface.l < 50 ? 'dark' : undefined}
       data-mat={surface.tex === 'glass' ? 'glass' : undefined}
       style={surfaceVars(surface) as CSSProperties}
@@ -394,6 +409,10 @@ export function CoreView() {
               ))}
             </div>
           </div>
+
+          <button type="button" className="more" aria-expanded={full} onClick={() => setFull(f => !f)}>
+            {full ? 'Show the heart only' : 'Show everything'}
+          </button>
 
           <div className="gate" onClick={() => go('tasks')}>
             <span className="avme" style={{ width: 30, height: 30, fontSize: 12 }}>{initials}</span>

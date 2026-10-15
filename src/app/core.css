@@ -160,6 +160,10 @@
 .core-root .bot .cost{color:var(--a-work)}
 @media (prefers-reduced-motion:reduce){.core-root .machine .slow,.core-root .machine .slower,.core-root .halo,.core-root .tile,.core-root .wcard .st u,.core-root .bot .ok u{animation:none}}
 @media(max-width:1250px){.core-root .kpis{grid-template-columns:repeat(2,1fr)}}
+/* short screens in desktop layout (a phone held sideways renders at 1280px wide but only ~590px tall): scroll, never squash */
+@media (min-width:1181px) and (max-height:700px){.core-root{overflow-y:auto;grid-template-rows:690px auto}}
+/* "Show everything" toggle: only on upright phones */
+.core-root .more{display:none}
 /* laptops (1366x768, 1280x800): full core + 280px rails collide; shrink the heart, keep the bowtie */
 @media (min-width:1181px) and (max-width:1400px),(min-width:1181px) and (max-height:820px){
   .core-root .core{width:340px;height:340px}
@@ -210,4 +214,14 @@
   .core-root .tile{border-radius:8px}
   .core-root .core{width:280px;height:280px;margin:40px 0 70px}
   .core-root .tile{transform:rotate(var(--a)) translateX(150px) rotate(calc(-1*var(--a)))}
+}
+/* upright phones open on the heart alone */
+@media (max-width:760px) and (orientation:portrait){
+  .core-root .more{display:flex;align-items:center;gap:8px;position:relative;z-index:6;padding:12px 22px;border:1px solid var(--card-border);border-radius:8px;cursor:pointer;
+    background:var(--card);color:var(--ink-2);font:600 13px var(--mono);letter-spacing:.1em;text-transform:uppercase;
+    box-shadow:-4px -4px 10px var(--sh-lo),5px 5px 11px var(--sh-hi)}
+  .core-root .more:active{box-shadow:inset 3px 3px 7px var(--sh-hi),inset -3px -3px 7px var(--sh-lo)}
+  .core-root:not(.full) .top,.core-root:not(.full) .rail,.core-root:not(.full) .gate,.core-root:not(.full) .bot{display:none}
+  .core-root:not(.full) .stage{justify-content:center;min-height:calc(100dvh - 160px)}
+  .core-root.full .more{order:-1}
 }
