@@ -21,6 +21,7 @@ export const SNAPSHOT = {
     ] },
     { title: 'System', items: [
       { label: 'Dictionary', icon: 'ledger', target: 'dictionary' },
+      { label: 'Mailboxes', icon: 'ledger', target: 'mailboxes' },
       { label: 'Settings', icon: 'gear', target: 'settings' },
     ] },
   ] as { title: string; items: { label: string; icon: string; target: string; color?: string; badge?: number }[] }[],

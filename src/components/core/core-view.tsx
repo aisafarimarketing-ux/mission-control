@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { TalkPanel } from './talk-panel'
 import { DictionaryPanel } from './dictionary-panel'
+import { MailboxesPanel } from './mailboxes-panel'
 import { useNavigateToPanel } from '@/lib/navigation'
 import { useMissionControl } from '@/store'
 import { SNAPSHOT } from './core-snapshot'
@@ -257,6 +258,7 @@ export function CoreView() {
   const [popOpen, setPopOpen] = useState(false)
   const [talk, setTalk] = useState<(typeof SNAPSHOT.workers)[number] | null>(null)
   const [dict, setDict] = useState(false)
+  const [mail, setMail] = useState(false)
   const [full, setFull] = useState(false) // phones open on the heart alone; 'Show everything' reveals the rest
 
   useEffect(() => {
@@ -292,6 +294,7 @@ export function CoreView() {
 
   const go = (target: string) => {
     if (target === 'dictionary') setDict(true)
+    else if (target === 'mailboxes') setMail(true)
     else if (target.startsWith('http')) window.open(target, '_blank', 'noopener')
     else navigate(target)
   }
@@ -442,6 +445,7 @@ export function CoreView() {
         <TalkPanel agent={talk.agent} name={talk.name.replace(' · Claude', '')} role={talk.role} voice={(talk.voice as 'M' | 'F') || 'M'} color={talk.color} onClose={() => setTalk(null)} onDictionary={() => setDict(true)} />
       )}
       {dict && <DictionaryPanel onClose={() => setDict(false)} />}
+      {mail && <MailboxesPanel onClose={() => setMail(false)} />}
 
       <div className="bot">
         <span className="ok"><u />{SNAPSHOT.bar.gates}</span>
