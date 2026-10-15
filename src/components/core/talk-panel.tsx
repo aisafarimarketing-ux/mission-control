@@ -29,6 +29,9 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
   const [micHelp, setMicHelp] = useState(false)
   // 'fast' = the browser's own natural voice (instant; Microsoft natural voices in Edge), 'kokoro' = our own voice.
   const [engine, setEngine] = useState<'fast' | 'kokoro'>('fast')
+  const [rate, setRate] = useState(1.15) // talking speed, per device
+  useEffect(() => { try { const r = Number(localStorage.getItem('core-voice-rate')); if (r >= 0.8 && r <= 1.6) setRate(r) } catch { /* blocked */ } }, [])
+  function chooseRate(r: number) { setRate(r); try { localStorage.setItem('core-voice-rate', String(r)) } catch { /* blocked */ } }
   const answer = useRef('') // full text of the answer being spoken, to recognise our own voice in the mic
   const pendingSpeech = useRef(''); const sendTimer = useRef<ReturnType<typeof setTimeout> | null>(null) // null = ready or not started
   const rec = useRef<SR | null>(null)
@@ -87,7 +90,7 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
   function say(sentence: string, id: number) {
     const s = sentence.trim(); if (!s) return
     pending.current++; setTalking(true)
-    const made = engine === 'kokoro' && tts.current ? tts.current.generate(s, { voice: pick }).catch(() => null) : Promise.resolve(null)
+    const made = engine === 'kokoro' && tts.current ? tts.current.generate(s, { voice: pick, speed: rate }).catch(() => null) : Promise.resolve(null)
     chain.current = chain.current.then(async () => {
       const raw = await made
       if (id !== turnId.current) return
@@ -97,7 +100,7 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
           const ac = audio(); const buf = ac.createBuffer(1, raw.audio.length, raw.sampling_rate); buf.copyToChannel(new Float32Array(raw.audio), 0)
           const src = ac.createBufferSource(); src.buffer = buf; src.connect(ac.destination); src.onended = () => done(); source.current = src; src.start()
         } else {
-          const u = new SpeechSynthesisUtterance(respellForBrowser(s)); const v = browserVoice(); if (v) u.voice = v
+          const u = new SpeechSynthesisUtterance(respellForBrowser(s)); const v = browserVoice(); if (v) u.voice = v; u.rate = rate
           u.onend = () => done(); u.onerror = () => done(); speechSynthesis.speak(u)
         }
       })
@@ -124,8 +127,13 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
     setLines(l => [...l, { who: 'you', text: t }, { who: 'agent', text: '' }]); setBusy(true); setNote('')
     let text_ = '', spoken = 0
     const flush = (final: boolean) => {
-      // speak every complete sentence as soon as it arrives
+      // speak every complete sentence as soon as it arrives; the very first chunk may stop at a comma
+      // once it has about six words, so the voice starts sooner
       const rest = text_.slice(spoken)
+      if (spoken === 0 && !final) {
+        const c = rest.match(/^[^.!?\n]*?[,;:]\s+(?=\S)/)
+        if (c && c[0].trim().split(/\s+/).length >= 6 && !/[.!?]/.test(c[0])) { say(c[0], id); spoken += c[0].length; return }
+      }
       const re = /[^.!?\n]+[.!?]+["')\]]*(\s+|$)|[^\n]+\n/g
       let m: RegExpExecArray | null, last = 0
       while ((m = re.exec(rest)) && (m.index + m[0].length < rest.length || final)) { say(m[0], id); last = m.index + m[0].length }
@@ -195,7 +203,7 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
       if (sendTimer.current) clearTimeout(sendTimer.current)
       if (fin.trim()) pendingSpeech.current = (pendingSpeech.current + ' ' + fin).trim()
       // Wait for 1.4 s of quiet so a short pause does not cut you off.
-      if (pendingSpeech.current) sendTimer.current = setTimeout(() => { const t = pendingSpeech.current; pendingSpeech.current = ''; setInterim(''); send(t) }, mid ? 2200 : 1400)
+      if (pendingSpeech.current) sendTimer.current = setTimeout(() => { const t = pendingSpeech.current; pendingSpeech.current = ''; setInterim(''); send(t) }, mid ? 1600 : 1000)
     }
     r.onerror = e => { if (e.error === 'not-allowed') { setMicHelp(true); wantListen.current = false; setListening(false) } }
     r.onend = () => { if (wantListen.current) { try { r.start() } catch { /* already running */ } } }
@@ -241,6 +249,11 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
               <button type="button" aria-pressed={engine === 'fast'} className={engine === 'fast' ? 'on' : ''} onClick={() => chooseEngine('fast')}>Fast voice</button>
               <button type="button" aria-pressed={engine === 'kokoro'} className={engine === 'kokoro' ? 'on' : ''} onClick={() => chooseEngine('kokoro')}>Our voice</button>
             </div>
+            <label className="talk-voice"><span>Speed</span>
+              <select id="talk-rate" value={rate} onChange={e => chooseRate(Number(e.target.value))} aria-label="Talking speed">
+                {[1, 1.1, 1.15, 1.25, 1.35, 1.5].map(r => <option key={r} value={r}>{r}×</option>)}
+              </select>
+            </label>
             <button type="button" className="talk-x" onClick={onDictionary}>Dictionary</button>
             <button type="button" className="talk-x" onClick={onClose} aria-label="Close">Close</button>
           </div>
