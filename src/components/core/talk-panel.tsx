@@ -25,7 +25,8 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
   const [draft, setDraft] = useState('')
   const [proposal, setProposal] = useState<Proposal | null>(null)
   const [note, setNote] = useState('')
-  const [voicePct, setVoicePct] = useState<number | null>(null) // null = ready or not started
+  const [voicePct, setVoicePct] = useState<number | null>(null)
+  const [micHelp, setMicHelp] = useState(false) // null = ready or not started
   const rec = useRef<SR | null>(null)
   const wantListen = useRef(false)
   const logRef = useRef<HTMLDivElement>(null)
@@ -147,8 +148,19 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
     } finally { setBusy(false) }
   }
 
-  function startListening() {
+  // First tap: ask the browser's own 'Allow microphone?' popup (one click). Blocked earlier: show the steps.
+  async function askMic(): Promise<boolean> {
+    try {
+      const st = await navigator.permissions?.query({ name: 'microphone' as PermissionName }).catch(() => null)
+      if (st?.state === 'denied') { setMicHelp(true); return false }
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      stream.getTracks().forEach(t => t.stop())
+      setMicHelp(false); return true
+    } catch { setMicHelp(true); return false }
+  }
+  async function startListening() {
     audio()
+    if (!(await askMic())) return
     const C = (window as unknown as { SpeechRecognition?: new () => SR; webkitSpeechRecognition?: new () => SR }).SpeechRecognition
       || (window as unknown as { webkitSpeechRecognition?: new () => SR }).webkitSpeechRecognition
     if (!C) { setNote('Voice input needs Chrome or Edge. You can still type below.'); return }
@@ -163,7 +175,7 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
       setInterim(mid)
       if (fin.trim() && !(speakingRef.current && echo.includes(fin.trim().toLowerCase()))) { setInterim(''); send(fin) }
     }
-    r.onerror = e => { if (e.error === 'not-allowed') { setNote('Allow the microphone to talk. You can still type below.'); wantListen.current = false; setListening(false) } }
+    r.onerror = e => { if (e.error === 'not-allowed') { setMicHelp(true); wantListen.current = false; setListening(false) } }
     r.onend = () => { if (wantListen.current) { try { r.start() } catch { /* already running */ } } }
     rec.current = r; wantListen.current = true; setListening(true)
     try { r.start() } catch { /* already running */ }
@@ -217,6 +229,15 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
             <span className="lab">New agent proposed</span>
             <b>{proposal.name}</b><p>{proposal.role}</p><p className="why">{proposal.why || proposal.playbook}</p>
             <div className="row"><button type="button" onClick={() => decide(true)}>Approve</button><button type="button" className="ghost" onClick={() => decide(false)}>Not now</button></div>
+          </div>
+        )}
+        {micHelp && (
+          <div className="talk-proposal mic-help" role="alert">
+            <span className="lab">Your microphone is blocked for this page</span>
+            <p>1. Click the small icon at the left of the address bar, just before core.safaritechlab.com.</p>
+            <p>2. Set <b>Microphone</b> to <b>Allow</b>.</p>
+            <p>3. Press <b>Try again</b>. On Windows, also check Settings → Privacy &amp; security → Microphone is on for desktop apps.</p>
+            <div className="row"><button type="button" onClick={() => { setMicHelp(false); startListening() }}>Try again</button><button type="button" className="ghost" onClick={() => setMicHelp(false)}>Type instead</button></div>
           </div>
         )}
         {note && <p className="talk-note">{note}</p>}
