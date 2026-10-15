@@ -161,7 +161,7 @@
 @media (prefers-reduced-motion:reduce){.core-root .machine .slow,.core-root .machine .slower,.core-root .halo,.core-root .tile,.core-root .wcard .st u,.core-root .bot .ok u{animation:none}}
 @media(max-width:1250px){.core-root .kpis{grid-template-columns:repeat(2,1fr)}}
 /* short screens in desktop layout (a phone held sideways renders at 1280px wide but only ~590px tall): scroll, never squash */
-@media (min-width:1181px) and (max-height:700px){.core-root{overflow-y:auto;grid-template-rows:690px auto}}
+@media (min-width:1181px) and (max-height:700px) and (min-height:621px){.core-root{overflow-y:auto;grid-template-rows:690px auto}}
 /* "Show everything" toggle: only on upright phones */
 .core-root .more{display:none}
 /* laptops (1366x768, 1280x800): full core + 280px rails collide; shrink the heart, keep the bowtie */
@@ -170,6 +170,31 @@
   .core-root .tile{transform:rotate(var(--a)) translateX(186px) rotate(calc(-1*var(--a)))}
   .core-root .rail{width:264px}
   .core-root .gate{top:calc(50% + 218px)}
+}
+/* very short desktop (a phone held sideways: 1280 x ~535-590): tighten everything so the whole room fits one screen */
+@media (min-width:1181px) and (max-height:620px){
+  .core-root .brand{padding:12px 18px 6px}
+  .core-root .nav h5{padding:8px 8px 3px}
+  .core-root .ni{padding:6px 12px;margin-bottom:2px}
+  .core-root .side .me{padding:8px 16px}
+  .core-root .top{padding:8px 22px 0}
+  .core-root .kpi{padding:7px 14px}
+  .core-root .kpi .chip{width:30px;height:30px}
+  .core-root .kpi b{font-size:19px}
+  .core-root .surf-btn{padding:8px 14px}
+  .core-root .rail{gap:6px}
+  .core-root .rail h4{font-size:12px}
+  .core-root .wcard{padding:5px 12px}
+  .core-root .wcard .ic{width:34px;height:34px;border-radius:10px}
+  .core-root .wcard .ic svg{width:24px;height:24px}
+  .core-root .wcard b{font-size:15px}
+  .core-root .wcard small{margin-top:0}
+  .core-root .core{width:270px;height:270px}
+  .core-root .tile{width:48px;height:48px;margin:-24px;border-radius:14px;transform:rotate(var(--a)) translateX(148px) rotate(calc(-1*var(--a)))}
+  @keyframes core-float{0%,100%{margin-top:-24px}50%{margin-top:-28px}}
+  .core-root .tile svg{width:22px;height:22px}
+  .core-root .gate{top:auto;bottom:4px;padding:6px 20px}
+  .core-root .bot{min-height:0;padding:5px 22px;gap:0 14px;font-size:12px}
 }
 @media(max-width:1180px){
   .core-root{display:block;overflow-y:auto}
@@ -198,6 +223,17 @@
 /* phones: core + orbit must fit 390px (orbit radius 150 + 28 tile = 356px wide) */
 @media(max-width:480px){
   .core-root .top{padding:14px 16px 0}
+  /* phones: brand + founder share one line; all nine topics visible as a 3x3 grid (no sideways scroll) */
+  .core-root .side{flex-wrap:wrap;overflow:visible}
+  .core-root .brand{padding:12px 10px 8px 16px;font-size:12px}
+  .core-root .side .me{padding:8px 16px 8px 0;gap:8px}
+  .core-root .side .me .avme{width:30px;height:30px;font-size:12px}
+  .core-root .nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:4px 12px 10px;overflow:visible}
+  .core-root .nav>div{display:contents}
+  .core-root .ni{position:relative;width:auto;margin:0;padding:9px 8px;gap:6px;border-radius:8px;justify-content:center}
+  .core-root .ni svg{width:16px;height:16px}
+  .core-root .ni span{font-size:14px}
+  .core-root .ni em{position:absolute;top:-6px;right:-4px;margin:0;font-size:12px;line-height:18px;padding:0 5px;min-width:18px}
   .core-root .kpis{flex-basis:100%}
   .core-root .surface{order:-1;margin-left:auto}
   /* phones: lighter, smaller KPI tiles; square-cornered cards; the gate stays the one round pill */
