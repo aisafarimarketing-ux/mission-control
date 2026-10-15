@@ -27,7 +27,7 @@ interface GoogleApi {
 }
 
 type LoginRequestBody =
-  | { username: string; password: string }
+  | { username: string; password: string; remember?: boolean }
   | { credential?: string }
 
 type LoginErrorPayload = {
@@ -237,9 +237,10 @@ export default function LoginPage() {
     const form = e.target as HTMLFormElement
     const formUsername = (form.elements.namedItem('username') as HTMLInputElement)?.value || username
     const formPassword = (form.elements.namedItem('password') as HTMLInputElement)?.value || password
+    const remember = (form.elements.namedItem('remember') as HTMLInputElement)?.checked ?? true
 
     try {
-      await completeLogin('/api/auth/login', { username: formUsername, password: formPassword })
+      await completeLogin('/api/auth/login', { username: formUsername.trim(), password: formPassword, remember })
     } catch {
       setError(t('networkError'))
       setLoading(false)
@@ -497,7 +498,11 @@ export default function LoginPage() {
             <label htmlFor="username" className="block text-sm font-medium text-foreground mb-1.5">{t('username')}</label>
             <input
               id="username"
+              name="username"
               type="text"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full h-10 px-3 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-primary/50 focus:border-primary transition-smooth"
@@ -513,6 +518,7 @@ export default function LoginPage() {
             <label htmlFor="password" className="block text-sm font-medium text-foreground mb-1.5">{t('password')}</label>
             <input
               id="password"
+              name="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -523,6 +529,11 @@ export default function LoginPage() {
               aria-required="true"
             />
           </div>
+
+          <label htmlFor="remember" className="flex items-center gap-2 text-sm text-foreground cursor-pointer select-none">
+            <input id="remember" name="remember" type="checkbox" defaultChecked className="h-5 w-5 accent-primary" />
+            Keep me signed in on this device (90 days)
+          </label>
 
           <Button
             type="submit"

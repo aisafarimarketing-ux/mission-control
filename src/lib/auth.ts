@@ -160,12 +160,13 @@ export function createSession(
   userId: number,
   ipAddress?: string,
   userAgent?: string,
-  workspaceId?: number
+  workspaceId?: number,
+  durationSeconds?: number
 ): { token: string; expiresAt: number } {
   const db = getDatabase()
   const token = randomBytes(32).toString('hex')
   const now = Math.floor(Date.now() / 1000)
-  const expiresAt = now + SESSION_DURATION
+  const expiresAt = now + (durationSeconds && durationSeconds > 0 ? durationSeconds : SESSION_DURATION)
   const resolvedWorkspaceId = workspaceId ?? ((db.prepare('SELECT workspace_id FROM users WHERE id = ?').get(userId) as { workspace_id?: number } | undefined)?.workspace_id || getDefaultWorkspaceContext().workspaceId)
   const resolvedTenantId = resolveTenantForWorkspace(resolvedWorkspaceId)
 
@@ -241,7 +242,8 @@ const DUMMY_HASH = '000000000000000000000000000000000000000000000000000000000000
 // User management
 export function authenticateUser(username: string, password: string): User | null {
   const db = getDatabase()
-  const row = db.prepare('SELECT * FROM users WHERE username = ?').get(username) as UserQueryRow | undefined
+  // Usernames match regardless of capitals or stray spaces (phones and password managers capitalise them)
+  const row = db.prepare('SELECT * FROM users WHERE username = ? COLLATE NOCASE').get(String(username).trim()) as UserQueryRow | undefined
   if (!row) {
     // Always run verifyPassword to prevent timing-based username enumeration
     verifyPassword(password, DUMMY_HASH)
