@@ -242,6 +242,16 @@
    "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
   },
   {
+   "id": "c08",
+   "group": "European",
+   "gender": "F",
+   "look": "An Irish woman in her early 30s with copper-red hair cut in a short pixie, fair skin, direct wry half-smile. She wears a white ceramic hooded cowl helmet that frames her face with a single black seam at the brow, over a black fitted suit.",
+   "assignedTo": null,
+   "image": "/agents/c08.webp",
+   "avatar": "/agents/c08-avatar.webp",
+   "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
+  },
+  {
    "id": "c09",
    "group": "European",
    "gender": "F",
@@ -249,6 +259,46 @@
    "assignedTo": null,
    "image": "/agents/c09.webp",
    "avatar": "/agents/c09-avatar.webp",
+   "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
+  },
+  {
+   "id": "c10",
+   "group": "European",
+   "gender": "M",
+   "look": "A German man in his mid 40s with short greying hair and a trimmed beard, steady authoritative gaze. He wears a charcoal long coat with white ceramic shoulder armour and a segmented high collar with thin gold seam lines.",
+   "assignedTo": null,
+   "image": "/agents/c10.webp",
+   "avatar": "/agents/c10-avatar.webp",
+   "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
+  },
+  {
+   "id": "c11",
+   "group": "European",
+   "gender": "M",
+   "look": "A Spanish man in his early 30s with dark curly hair and light stubble, warm easy confidence. He wears a warm-grey knit high-neck sweater under an open charcoal jacket, with fine white ceramic panels along his jaw and temple.",
+   "assignedTo": null,
+   "image": "/agents/c11.webp",
+   "avatar": "/agents/c11-avatar.webp",
+   "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
+  },
+  {
+   "id": "c12",
+   "group": "European",
+   "gender": "M",
+   "look": "A Polish man in his late 20s with blond buzz-cut hair, athletic build, alert focused eyes. He wears a matte white ceramic articulated suit with charcoal flexible joints, sculpted like high-end industrial design.",
+   "assignedTo": null,
+   "image": "/agents/c12.webp",
+   "avatar": "/agents/c12-avatar.webp",
+   "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
+  },
+  {
+   "id": "c13",
+   "group": "European",
+   "gender": "M",
+   "look": "A British man in his late 50s with silver swept-back hair and a neat white beard, composed wise presence. He wears a flowing warm-grey textured wool robe-coat over a white ceramic chest plate, hands loosely clasped.",
+   "assignedTo": null,
+   "image": "/agents/c13.webp",
+   "avatar": "/agents/c13-avatar.webp",
    "source": "Original, generated 2026-10-15 via Codex image generation on our ChatGPT plan"
   }
  ]

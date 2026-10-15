@@ -308,3 +308,45 @@
   .core-root .talk-portrait img{width:100%;height:100%;object-fit:cover;object-position:50% 12%} /* torso */
 }
 @media (prefers-reduced-motion:reduce){.core-root .talk-portrait.speaking::after,.core-root .core-talk{animation:none}}
+
+/* big round mic on the portrait — always visible, any zoom, any screen */
+.core-root .talk-mic{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);display:flex;align-items:center;gap:10px;padding:14px 26px 14px 20px;
+  border:0;border-radius:999px;cursor:pointer;background:var(--card);color:var(--ink);font:600 15px var(--mono);letter-spacing:.1em;text-transform:uppercase;
+  box-shadow:-6px -6px 14px var(--sh-lo),7px 7px 16px var(--sh-hi)}
+.core-root .talk-mic svg,.core-root .talk-input .mic svg{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.core-root .talk-mic.on{background:var(--c);color:var(--card-hi);box-shadow:inset 3px 3px 8px rgba(0,0,0,.25),inset -2px -2px 6px rgba(255,255,255,.15)}
+.core-root .talk-mic.on svg{animation:core-pulsedot 1.4s ease-in-out infinite}
+.core-root .talk-mic:focus-visible,.core-root .talk-input button:focus-visible{outline:3px solid var(--c);outline-offset:3px}
+.core-root .talk-input .mic{display:grid;place-items:center;padding:8px 12px}
+.core-root .talk-state{top:14px;bottom:auto}
+@media (max-width:760px){.core-root .talk-mic{bottom:14px;padding:12px 22px 12px 16px}}
+
+/* talk header tools: voice picker + dictionary */
+.core-root .talk-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.core-root .talk-voice{display:flex;align-items:center;gap:6px;font:600 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.core-root .talk-voice select{padding:9px 10px;border-radius:10px;border:1px solid var(--hair);background:var(--card-hi);color:var(--ink);font:500 14px var(--sans);max-width:220px}
+.core-root .talk-side header{flex-wrap:wrap}
+
+/* dictionary: one calm column */
+.core-root .core-dict{grid-template-columns:minmax(0,1fr);justify-items:center;z-index:70}
+.core-root .dict-main{width:100%;max-width:860px;min-height:0;display:flex;flex-direction:column;gap:12px}
+.core-root .dict-main header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.core-root .dict-main header b{display:block;font:600 24px var(--disp);color:var(--ink)}
+.core-root .dict-main header small{font:500 12px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.core-root .dict-add{display:grid;gap:10px;padding:16px;border-radius:var(--r);background:var(--card);box-shadow:-5px -5px 12px var(--sh-lo),6px 6px 13px var(--sh-hi)}
+.core-root .dict-add .row{display:flex;gap:10px;flex-wrap:wrap}
+.core-root .dict-add label{flex:1 1 220px;display:grid;gap:4px;font:600 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.core-root .dict-add input,.core-root .dict-search{padding:12px 14px;border-radius:10px;border:1px solid var(--hair);background:var(--card-hi);color:var(--ink);font:400 16px var(--sans);text-transform:none;letter-spacing:0}
+.core-root .dict-add button,.core-root .dict-row button{padding:10px 16px;border:1px solid var(--card-border);border-radius:10px;cursor:pointer;background:var(--card-hi);color:var(--ink-2);
+  font:600 13px var(--mono);letter-spacing:.08em;text-transform:uppercase;box-shadow:-3px -3px 8px var(--sh-lo),4px 4px 9px var(--sh-hi)}
+.core-root .dict-add button[type=submit]{background:var(--a-work);color:var(--card-hi)}
+.core-root .dict-add button:disabled,.core-root .dict-row button:disabled{opacity:.5;cursor:not-allowed}
+.core-root .dict-add button.ghost,.core-root .dict-row button.ghost{background:transparent;box-shadow:none}
+.core-root .dict-hint{margin:0;font:400 15px var(--sans);color:var(--ink-3)}
+.core-root .dict-list{flex:1;min-height:0;overflow-y:auto;display:grid;gap:6px;align-content:start;padding:4px}
+.core-root .dict-row{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:var(--card)}
+.core-root .dict-w{flex:1;min-width:0}
+.core-root .dict-w b{display:block;font:600 17px var(--sans);color:var(--ink);text-transform:capitalize}
+.core-root .dict-w small{font:400 14px var(--mono);color:var(--ink-3)}
+@media (max-width:760px){.core-root .dict-row{flex-wrap:wrap}.core-root .dict-w{flex-basis:100%}}
+@media (max-width:760px){.core-root .core-dict{grid-template-rows:minmax(0,1fr)}}
