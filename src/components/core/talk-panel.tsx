@@ -53,8 +53,7 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
 
   useEffect(() => {
     const decide = () => { let saved: string | null = null; try { saved = localStorage.getItem('core-voice-engine') } catch { /* blocked */ }
-      const phone = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600
-      setEngine(phone ? 'fast' : saved === 'kokoro' || saved === 'fast' ? saved : hasNatural() ? 'fast' : 'kokoro') }
+      setEngine(saved === 'kokoro' || saved === 'fast' ? saved : hasNatural() ? 'fast' : 'kokoro') }
     decide(); speechSynthesis.addEventListener?.('voiceschanged', decide)
     return () => speechSynthesis.removeEventListener?.('voiceschanged', decide)
   }, [])
@@ -66,8 +65,7 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
     if (tts.current) { stopSpeaking(); const id = ++turnId.current; say(`Karibu. This is how I sound now.`, id) }
   }
 
-  // Load our voice once it is chosen (cached by the browser after the first time). Phones start on the fast voice:
-  // our voice is generated on the device, and a phone makes it slower than speech, so it paused between sentences.
+  // Load our voice once it is chosen (cached by the browser after the first time).
   useEffect(() => {
     if (engine !== 'kokoro' || tts.current) return
     const onPct = (p: number) => setVoicePct(p < 100 ? p : null)
@@ -111,6 +109,9 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
           const src = ac.createBufferSource(); src.buffer = buf; src.connect(ac.destination); src.onended = () => done(); source.current = src; src.start()
         } else {
           const u = new SpeechSynthesisUtterance(respellForBrowser(s)); const v = browserVoice(); if (v) u.voice = v; u.rate = rate
+          // Some phones' built-in speech stays silent: if it has not started within 2.5 s, switch to our voice.
+          let started = false; u.onstart = () => { started = true }
+          setTimeout(() => { if (!started && id === turnId.current) { speechSynthesis.cancel(); chooseEngine('kokoro'); setNote('The fast voice is silent on this device, so I switched to our voice.'); done() } }, 2500)
           u.onend = () => done(); u.onerror = () => done(); speechSynthesis.speak(u)
         }
       })
