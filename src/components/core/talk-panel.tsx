@@ -150,6 +150,17 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
       if (final && last < rest.length) { say(rest.slice(last), id); last = rest.length }
       spoken += last
     }
+    // A finished sentence is spoken once the text pauses for a moment, without waiting for the next sentence to begin
+    // (the next text can be many seconds away while the agent looks something up).
+    let idle: ReturnType<typeof setTimeout> | null = null
+    const flushSoon = () => {
+      if (idle) clearTimeout(idle)
+      idle = setTimeout(() => {
+        if (id !== turnId.current) return
+        const m = text_.slice(spoken).match(/^[\s\S]*[.!?]["')\]]*\s*$/)
+        if (m) { say(m[0], id); spoken += m[0].length }
+      }, 350)
+    }
     try {
       const res = await apiFetch<Response>('/api/core/talk', { raw: true, method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ agent, text: t, heard }) })
       if (!res.ok || !res.body) { const j = await res.json().catch(() => ({})); throw new ApiError('SERVER_ERROR', res.status, (j as { error?: string }).error || 'No answer this time.') }
@@ -165,12 +176,13 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
           if (ev.error) throw new ApiError('SERVER_ERROR', 500, ev.error)
           if (ev.d) {
             text_ += ev.d
-            if (!text_.includes('```')) { setLines(l => [...l.slice(0, -1), { who: 'agent', text: text_ }]); if (id === turnId.current) flush(false) }
+            if (!text_.includes('```')) { setLines(l => [...l.slice(0, -1), { who: 'agent', text: text_ }]); if (id === turnId.current) { flush(false); flushSoon() } }
           }
           if (ev.done) {
             text_ = ev.reply ?? text_
             setLines(l => [...l.slice(0, -1), { who: 'agent', text: text_ }])
             if (ev.proposal) setProposal(ev.proposal)
+            if (idle) clearTimeout(idle)
             if (id === turnId.current) { spoken = Math.min(spoken, text_.length); flush(true) }
           }
         }
