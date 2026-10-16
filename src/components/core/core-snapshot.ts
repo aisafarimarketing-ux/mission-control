@@ -56,3 +56,20 @@ export const SNAPSHOT = {
   ],
   bar: { gates: 'all gates green', heartbeat: '30 s', replyWatch: '07–20 EAT', leaks: '0', prsMerged: '3' },
 }
+
+// Live HQ feed (/api/core/ops → HQ /api/ops/status): the App Health deck, nav badge, KPI and bottom bar read this.
+export type OpsFeed = { at: string; services: { key: string; name: string; ok: boolean | null; checkedAt: string | null }[]; incidents: { name: string }[] }
+export function opsSummary(feed: OpsFeed, now: number) {
+  const seen = feed.services.filter(s => s.ok !== null)
+  const down = seen.filter(s => !s.ok).map(s => s.name)
+  const last = Math.max(0, ...seen.map(s => Date.parse(s.checkedAt ?? '') || 0))
+  const age = last ? Math.max(0, Math.round((now - last) / 1000)) : null
+  return {
+    total: feed.services.length,
+    up: seen.length - down.length,
+    down,
+    heartbeat: age === null ? 'none yet' : age < 90 ? `${age} s ago` : `${Math.round(age / 60)} min ago`,
+    stale: age === null || age > 120, // the Watchman beats every 30 s; two minutes quiet means it has stopped
+    at: new Date(feed.at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Nairobi' }),
+  }
+}
