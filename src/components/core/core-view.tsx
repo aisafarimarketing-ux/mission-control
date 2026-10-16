@@ -6,7 +6,8 @@ import { DictionaryPanel } from './dictionary-panel'
 import { MailboxesPanel } from './mailboxes-panel'
 import { useNavigateToPanel } from '@/lib/navigation'
 import { useMissionControl } from '@/store'
-import { SNAPSHOT } from './core-snapshot'
+import { apiFetch } from '@/lib/api-client'
+import { SNAPSHOT, opsSummary, type OpsFeed } from './core-snapshot'
 
 // The v13 command room (artifact 7r6nd3aRiqhFX7NGdVKW9K). Styles live in src/app/core.css.
 
@@ -260,6 +261,17 @@ export function CoreView() {
   const [dict, setDict] = useState(false)
   const [mail, setMail] = useState(false)
   const [full, setFull] = useState(false) // phones open on the heart alone; 'Show everything' reveals the rest
+  const [ops, setOps] = useState<OpsFeed | null>(null)
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    // The Watchman's latest pass from HQ, every 30 s. On failure the screen keeps the last good pass (or the dated snapshot).
+    const pull = () => apiFetch<OpsFeed>('/api/core/ops', { cache: 'no-store' }).then(d => { if (d?.services) setOps(d) }).catch(() => {})
+    pull()
+    const t = setInterval(() => { pull(); setNow(Date.now()) }, 30_000)
+    return () => clearInterval(t)
+  }, [])
+  const health = ops && opsSummary(ops, now)
 
   useEffect(() => {
     try { const saved = localStorage.getItem(SURFACE_KEY); if (saved) setSurface({ ...DEFAULT_SURFACE, ...JSON.parse(saved) }) } catch { /* storage blocked */ }
@@ -335,7 +347,7 @@ export function CoreView() {
           {SNAPSHOT.nav.map(group => (
             <div key={group.title}>
               <h5>{group.title}</h5>
-              {group.items.map(item => (
+              {group.items.map(i => ({ ...i, badge: i.label === 'App Health' && health ? health.down.length : i.badge })).map(item => (
                 <button key={item.label} type="button" className={`ni${item.target === 'overview' ? ' on' : ''}`} style={item.color ? v(item.color) : undefined} onClick={() => go(item.target)}>
                   {ICONS[item.icon]}<span>{item.label}</span>{item.badge !== undefined && <em>{item.badge}</em>}
                 </button>
@@ -357,7 +369,7 @@ export function CoreView() {
 
         <div className="top">
           <div className="kpis">
-            {SNAPSHOT.kpis.map(k => (
+            {SNAPSHOT.kpis.map(k => (health && k.icon === 'beat' ? { ...k, value: String(health.total), label: 'services watched · live' } : k)).map(k => (
               <div key={k.label} className="kpi" style={v(k.color)}>
                 <span className="chip">{ICONS[k.icon]}</span>
                 <span><b>{k.value}</b><small>{k.label}</small></span>
@@ -397,7 +409,7 @@ export function CoreView() {
         <div className="stage">
           <aside className="rail left">
             <h4>On shift now <i /></h4>
-            {SNAPSHOT.workers.map(w => (
+            {SNAPSHOT.workers.map(w => (health && w.agent === 'watchman' ? { ...w, role: `${health.total} services · incident ladder`, status: health.stale ? 'quiet' : w.status } : w)).map(w => (
               <div key={w.name} className="wcard" style={v(w.color)} onClick={() => (w.agent ? setTalk(w) : go(w.target))}>
                 {/* eslint-disable-next-line @next/next/no-img-element -- static avatar from /public */}
                 <span className="ic">{w.agent ? <img src={`/agents/${w.agent}-avatar.webp`} alt="" /> : ICONS[w.icon]}</span>
@@ -411,7 +423,7 @@ export function CoreView() {
             <span className="halo" />
             <svg className="machine" viewBox="0 0 430 430" aria-label="The schematic clockwork heart of Safari Tech Lab" dangerouslySetInnerHTML={{ __html: MACHINE }} />
             <div className="orbit">
-              {SNAPSHOT.decks.map((d, i) => (
+              {SNAPSHOT.decks.map(d => (health && d.label === 'App Health' ? { ...d, badge: `${health.up}/${health.total}` } : d)).map((d, i) => (
                 <div key={d.label} className="tile" style={{ '--a': `${d.angle}deg`, '--c': `var(${d.color})`, '--d': `${i * 0.5}s` } as CSSProperties} onClick={() => go(d.target)}>
                   {ICONS[d.icon]}<i>{d.badge}</i><b>{d.label}</b>
                 </div>
@@ -448,12 +460,14 @@ export function CoreView() {
       {mail && <MailboxesPanel onClose={() => setMail(false)} />}
 
       <div className="bot">
-        <span className="ok"><u />{SNAPSHOT.bar.gates}</span>
-        <span>heartbeat <b>{SNAPSHOT.bar.heartbeat}</b></span>
+        {health
+          ? <span className={health.down.length || health.stale ? 'ok down' : 'ok'}><u />{health.down.length ? `${health.down.length} down: ${health.down.join(', ')}` : health.stale ? 'Watchman is quiet' : `all ${health.up} services up`}</span>
+          : <span className="ok"><u />{SNAPSHOT.bar.gates}</span>}
+        <span>heartbeat <b>{health ? health.heartbeat : SNAPSHOT.bar.heartbeat}</b></span>
         <span>reply watch <b>{SNAPSHOT.bar.replyWatch}</b></span>
         <span>leaks found today <b>{SNAPSHOT.bar.leaks}</b></span>
         <span className="sp" />
-        <span>snapshot <b>{SNAPSHOT.asOf}</b> · live feed next</span>
+        {health ? <span>live from HQ <b>{health.at}</b> EAT</span> : <span>snapshot <b>{SNAPSHOT.asOf}</b> · live feed next</span>}
         <span className="cost">PRs merged today <b style={{ color: 'inherit' }}>{SNAPSHOT.bar.prsMerged}</b></span>
       </div>
     </div>

@@ -156,6 +156,8 @@
 .core-root .bot b{color:var(--ink-2);font-weight:500}
 .core-root .bot .ok{display:flex;align-items:center;gap:7px;color:var(--a-sec)}
 .core-root .bot .ok u{width:8px;height:8px;border-radius:50%;background:var(--a-sec);text-decoration:none;animation:core-pulsedot 2.4s ease-in-out infinite}
+.core-root .bot .ok.down{color:var(--a-grow)}
+.core-root .bot .ok.down u{background:var(--a-grow)}
 .core-root .bot .sp{flex:1}
 .core-root .bot .cost{color:var(--a-work)}
 @media (prefers-reduced-motion:reduce){.core-root .machine .slow,.core-root .machine .slower,.core-root .halo,.core-root .tile,.core-root .wcard .st u,.core-root .bot .ok u{animation:none}}

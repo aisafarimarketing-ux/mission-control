@@ -8,7 +8,8 @@ async function forward(request: NextRequest, path: string[], method: 'GET' | 'PO
   const auth = requireRole(request, 'admin')
   if ('error' in auth) return NextResponse.json({ error: auth.error }, { status: auth.status })
   const sub = path.join('/')
-  if (!ALLOWED.has(sub)) return NextResponse.json({ error: 'not found' }, { status: 404 })
+  if (sub === 'ops' && method === 'GET') return opsFeed()
+  if (!ALLOWED.has(sub))return NextResponse.json({ error: 'not found' }, { status: 404 })
   const base = process.env.CORE_BRIDGE_URL, key = process.env.CORE_BRIDGE_KEY
   if (!base || !key) return NextResponse.json({ error: 'The talk bridge is not configured on this server yet.' }, { status: 503 })
   try {
@@ -25,6 +26,18 @@ async function forward(request: NextRequest, path: string[], method: 'GET' | 'PO
     return NextResponse.json(await res.json(), { status: res.status })
   } catch {
     return NextResponse.json({ error: 'The agents are unreachable right now. Watchman will flag it if it persists.' }, { status: 502 })
+  }
+}
+
+// The Watchman's latest pass from HQ (read-only /api/ops/status) for the App Health deck.
+async function opsFeed() {
+  const url = process.env.HQ_OPS_URL, key = process.env.HQ_OPS_KEY
+  if (!url || !key) return NextResponse.json({ error: 'The HQ feed is not configured on this server yet.' }, { status: 503 })
+  try {
+    const res = await fetch(url, { headers: { authorization: `Bearer ${key}` }, cache: 'no-store', signal: AbortSignal.timeout(10_000) })
+    return NextResponse.json(await res.json(), { status: res.status })
+  } catch {
+    return NextResponse.json({ error: 'HQ is unreachable right now.' }, { status: 502 })
   }
 }
 
