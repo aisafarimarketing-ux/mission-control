@@ -121,6 +121,14 @@ export default async function RootLayout({
             __html: `(function(){try{var t=localStorage.getItem('theme')||'safari-core';var light=['light','paper','safari-core'];if(light.indexOf(t)===-1)document.documentElement.classList.add('dark')}catch(e){}})()`,
           }}
         />
+        {/* A phone held sideways gets the real desktop room at 1280px (approved v13 design). Phones only honour a viewport
+            width set before first paint, so it is set here, and turning the phone reloads once into the other layout. */}
+        <script
+          nonce={nonce}
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var land=matchMedia('(orientation: landscape)');var wide=function(){return Math.min(screen.width,screen.height)<500&&matchMedia('(pointer: coarse)').matches&&land.matches};var was=wide();if(was){var W='width=1280, viewport-fit=cover';var fix=function(){document.querySelectorAll('meta[name="viewport"]').forEach(function(m){if(m.content!==W)m.content=W})};fix();new MutationObserver(fix).observe(document.head,{childList:true,subtree:true,attributes:true,attributeFilter:['content']})}land.addEventListener('change',function(){if(wide()!==was)location.reload()})}catch(e){}})()`,
+          }}
+        />
       </head>
       <body className={`${inter.variable} ${jetbrainsMono.variable} ${chakra.variable} ${azeret.variable} font-sans antialiased`} suppressHydrationWarning>
         <NextIntlClientProvider messages={messages}>

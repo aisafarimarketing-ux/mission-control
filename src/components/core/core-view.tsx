@@ -284,20 +284,6 @@ export function CoreView() {
     return startSilk(rootRef.current, mainRef.current, cvRef.current)
   }, [])
   useEffect(() => {
-    // Phone turned sideways: lay the page out at 1280px and let the phone scale it, so it gets the real desktop bowtie.
-    const meta = document.querySelector<HTMLMetaElement>('meta[name="viewport"]')
-    if (!meta) return
-    const original = meta.content
-    const land = matchMedia('(orientation: landscape)')
-    const apply = () => {
-      const phone = Math.min(screen.width, screen.height) < 500 && matchMedia('(pointer: coarse)').matches
-      meta.content = phone && land.matches ? 'width=1280, viewport-fit=cover' : original
-    }
-    apply()
-    land.addEventListener('change', apply)
-    return () => { land.removeEventListener('change', apply); meta.content = original }
-  }, [])
-  useEffect(() => {
     if (!popOpen) return
     const close = (e: PointerEvent) => { if (!(e.target as Element).closest('.surface')) setPopOpen(false) }
     document.addEventListener('pointerdown', close)
