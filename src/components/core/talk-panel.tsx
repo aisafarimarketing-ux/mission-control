@@ -53,7 +53,7 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
 
   useEffect(() => {
     const decide = () => { let saved: string | null = null; try { saved = localStorage.getItem('core-voice-engine') } catch { /* blocked */ }
-      const phone = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 500
+      const phone = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600
       setEngine(phone ? 'fast' : saved === 'kokoro' || saved === 'fast' ? saved : hasNatural() ? 'fast' : 'kokoro') }
     decide(); speechSynthesis.addEventListener?.('voiceschanged', decide)
     return () => speechSynthesis.removeEventListener?.('voiceschanged', decide)

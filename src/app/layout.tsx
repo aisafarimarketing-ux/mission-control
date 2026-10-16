@@ -126,7 +126,7 @@ export default async function RootLayout({
         <script
           nonce={nonce}
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var land=matchMedia('(orientation: landscape)');var wide=function(){return Math.min(screen.width,screen.height)<500&&matchMedia('(pointer: coarse)').matches&&land.matches};var was=wide();if(was){var W='width=1280, viewport-fit=cover';var fix=function(){document.querySelectorAll('meta[name="viewport"]').forEach(function(m){if(m.content!==W)m.content=W})};fix();new MutationObserver(fix).observe(document.head,{childList:true,subtree:true,attributes:true,attributeFilter:['content']})}land.addEventListener('change',function(){if(wide()!==was)location.reload()})}catch(e){}})()`,
+            __html: `(function(){try{var land=matchMedia('(orientation: landscape)');var wide=function(){return Math.min(screen.width,screen.height)<600&&matchMedia('(pointer: coarse)').matches&&land.matches};var was=wide();if(was){var W='width=1280, viewport-fit=cover';var fix=function(){document.querySelectorAll('meta[name="viewport"]').forEach(function(m){if(m.content!==W)m.content=W})};fix();new MutationObserver(fix).observe(document.head,{childList:true,subtree:true,attributes:true,attributeFilter:['content']})}land.addEventListener('change',function(){if(wide()!==was)location.reload()})}catch(e){}})()`,
           }}
         />
       </head>
