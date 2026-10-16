@@ -320,7 +320,13 @@
 .core-root .talk-mic.on svg{animation:core-pulsedot 1.4s ease-in-out infinite}
 .core-root .talk-mic:focus-visible,.core-root .talk-input button:focus-visible{outline:3px solid var(--c);outline-offset:3px}
 .core-root .talk-input .mic{display:grid;place-items:center;padding:8px 12px}
-.core-root .talk-state{top:14px;bottom:auto}
+.core-root .talk-state{top:14px;bottom:auto;left:auto;right:14px}
+/* Back to the Core: always top-left of the portrait, a full 48px touch target */
+.core-root .talk-back{position:absolute;left:12px;top:12px;z-index:3;min-height:48px;display:flex;align-items:center;gap:8px;padding:0 18px;border:1px solid var(--card-border);border-radius:999px;cursor:pointer;
+  background:var(--card);color:var(--ink);font:600 16px var(--sans);box-shadow:-4px -4px 9px var(--sh-lo),5px 5px 10px var(--sh-hi)}
+.core-root .talk-back span{font-size:20px;line-height:1}
+.core-root .talk-back:active{box-shadow:inset 3px 3px 7px var(--sh-hi),inset -3px -3px 7px var(--sh-lo)}
+.core-root .talk-back:focus-visible{outline:3px solid var(--c);outline-offset:3px}
 @media (max-width:760px){.core-root .talk-mic{bottom:14px;padding:12px 22px 12px 16px}}
 
 /* talk header tools: voice picker + dictionary */

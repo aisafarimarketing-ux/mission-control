@@ -32,7 +32,7 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
   const [rate, setRate] = useState(1.15) // talking speed, per device
   useEffect(() => { try { const r = Number(localStorage.getItem('core-voice-rate')); if (r >= 0.8 && r <= 1.6) setRate(r) } catch { /* blocked */ } }, [])
   function chooseRate(r: number) { setRate(r); try { localStorage.setItem('core-voice-rate', String(r)) } catch { /* blocked */ } }
-  const answer = useRef('') // full text of the answer being spoken, to recognise our own voice in the mic
+  const base = useRef(0); const finEnd = useRef(0); const sessFin = useRef('') // recognition results already sent / final so far
   const pendingSpeech = useRef(''); const sendTimer = useRef<ReturnType<typeof setTimeout> | null>(null) // null = ready or not started
   const rec = useRef<SR | null>(null)
   const wantListen = useRef(false)
@@ -53,7 +53,8 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
 
   useEffect(() => {
     const decide = () => { let saved: string | null = null; try { saved = localStorage.getItem('core-voice-engine') } catch { /* blocked */ }
-      setEngine(saved === 'kokoro' || saved === 'fast' ? saved : hasNatural() ? 'fast' : 'kokoro') }
+      const phone = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 500
+      setEngine(phone ? 'fast' : saved === 'kokoro' || saved === 'fast' ? saved : hasNatural() ? 'fast' : 'kokoro') }
     decide(); speechSynthesis.addEventListener?.('voiceschanged', decide)
     return () => speechSynthesis.removeEventListener?.('voiceschanged', decide)
   }, [])
@@ -65,16 +66,25 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
     if (tts.current) { stopSpeaking(); const id = ++turnId.current; say(`Karibu. This is how I sound now.`, id) }
   }
 
-  // Start loading our voice as soon as the panel opens (cached by the browser after the first time).
+  // Load our voice once it is chosen (cached by the browser after the first time). Phones start on the fast voice:
+  // our voice is generated on the device, and a phone makes it slower than speech, so it paused between sentences.
   useEffect(() => {
+    if (engine !== 'kokoro' || tts.current) return
     const onPct = (p: number) => setVoicePct(p < 100 ? p : null)
     progressListeners.add(onPct)
     loadVoice().then(t => { tts.current = t; setVoicePct(null) }).catch(() => { setVoicePct(null); setNote('Our voice could not load here; using the browser voice for now.') })
     return () => { progressListeners.delete(onPct) }
-  }, [])
+  }, [engine])
 
   function audio() { ctx.current = audioContext(); return ctx.current }
-  function setTalking(on: boolean) { speakingRef.current = on; setSpeaking(on) }
+  // The mic is off while the agent speaks: phone speakers leak into the mic and the agent answered its own words.
+  // Tap Talk (or the portrait) to cut the agent short instead.
+  function setTalking(on: boolean) {
+    if (speakingRef.current === on) return
+    speakingRef.current = on; setSpeaking(on)
+    if (on) { if (sendTimer.current) clearTimeout(sendTimer.current); rec.current?.stop() }
+    else setTimeout(() => { if (wantListen.current && !speakingRef.current) { try { rec.current?.start() } catch { /* already running */ } } }, 300)
+  }
 
   function browserVoice() {
     const vs = speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'))
@@ -140,6 +150,17 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
       if (final && last < rest.length) { say(rest.slice(last), id); last = rest.length }
       spoken += last
     }
+    // A finished sentence is spoken once the text pauses for a moment, without waiting for the next sentence to begin
+    // (the next text can be many seconds away while the agent looks something up).
+    let idle: ReturnType<typeof setTimeout> | null = null
+    const flushSoon = () => {
+      if (idle) clearTimeout(idle)
+      idle = setTimeout(() => {
+        if (id !== turnId.current) return
+        const m = text_.slice(spoken).match(/^[\s\S]*[.!?]["')\]]*\s*$/)
+        if (m) { say(m[0], id); spoken += m[0].length }
+      }, 350)
+    }
     try {
       const res = await apiFetch<Response>('/api/core/talk', { raw: true, method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ agent, text: t, heard }) })
       if (!res.ok || !res.body) { const j = await res.json().catch(() => ({})); throw new ApiError('SERVER_ERROR', res.status, (j as { error?: string }).error || 'No answer this time.') }
@@ -154,13 +175,14 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
           const ev = JSON.parse(chunk.slice(6)) as { d?: string; done?: boolean; reply?: string; proposal?: Proposal | null; error?: string }
           if (ev.error) throw new ApiError('SERVER_ERROR', 500, ev.error)
           if (ev.d) {
-            text_ += ev.d; answer.current = text_
-            if (!text_.includes('```')) { setLines(l => [...l.slice(0, -1), { who: 'agent', text: text_ }]); if (id === turnId.current) flush(false) }
+            text_ += ev.d
+            if (!text_.includes('```')) { setLines(l => [...l.slice(0, -1), { who: 'agent', text: text_ }]); if (id === turnId.current) { flush(false); flushSoon() } }
           }
           if (ev.done) {
             text_ = ev.reply ?? text_
             setLines(l => [...l.slice(0, -1), { who: 'agent', text: text_ }])
             if (ev.proposal) setProposal(ev.proposal)
+            if (idle) clearTimeout(idle)
             if (id === turnId.current) { spoken = Math.min(spoken, text_.length); flush(true) }
           }
         }
@@ -188,30 +210,45 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
       || (window as unknown as { webkitSpeechRecognition?: new () => SR }).webkitSpeechRecognition
     if (!C) { setNote('Voice input needs Chrome or Edge. You can still type below.'); return }
     const r = new C(); r.continuous = true; r.interimResults = true; r.lang = 'en-GB'
+    // Android's continuous mode re-sends everything heard so far as new results, which repeated each phrase many
+    // times; there each phrase is its own short session. Results are read from `base` (what was already sent) onward.
+    r.continuous = !/Android/i.test(navigator.userAgent)
     r.onresult = e => {
-      let fin = '', mid = ''
-      for (let i = e.resultIndex; i < e.results.length; i++) (e.results[i].isFinal ? (fin += e.results[i][0].transcript) : (mid += e.results[i][0].transcript))
-      const heardNow = (mid || fin).trim().toLowerCase()
-      // Our own voice leaking from the speakers: most of what the mic hears is words from the current answer.
-      const words = heardNow.split(/[^\p{L}\p{N}']+/u).filter(Boolean)
-      const ans = new Set(answer.current.toLowerCase().split(/[^\p{L}\p{N}']+/u))
-      const isEcho = speakingRef.current && words.length > 0 && words.filter(w => ans.has(w)).length / words.length >= 0.5
-      // Barge-in: three of your own words stop the agent.
-      if (speakingRef.current && !isEcho && words.length >= 3) stopSpeaking()
-      if (isEcho) return
-      setInterim((pendingSpeech.current + ' ' + mid).trim())
+      let k = base.current, fin = '', mid = ''
+      while (k < e.results.length && e.results[k].isFinal) fin += e.results[k++][0].transcript
+      finEnd.current = k; sessFin.current = fin.trim()
+      for (let i = k; i < e.results.length; i++) mid += e.results[i][0].transcript
+      const heard = (pendingSpeech.current + ' ' + sessFin.current).trim()
+      setInterim((heard + ' ' + mid).trim())
       if (sendTimer.current) clearTimeout(sendTimer.current)
-      if (fin.trim()) pendingSpeech.current = (pendingSpeech.current + ' ' + fin).trim()
-      // Wait for 1.4 s of quiet so a short pause does not cut you off.
-      if (pendingSpeech.current) sendTimer.current = setTimeout(() => { const t = pendingSpeech.current; pendingSpeech.current = ''; setInterim(''); send(t) }, mid ? 1600 : 1000)
+      // Wait for a moment of quiet so a short pause does not cut you off.
+      if (heard) sendTimer.current = setTimeout(sendHeard, mid ? 1600 : 1000)
     }
     r.onerror = e => { if (e.error === 'not-allowed') { setMicHelp(true); wantListen.current = false; setListening(false) } }
-    r.onend = () => { if (wantListen.current) { try { r.start() } catch { /* already running */ } } }
+    r.onend = () => {
+      pendingSpeech.current = (pendingSpeech.current + ' ' + sessFin.current).trim(); sessFin.current = ''; base.current = 0; finEnd.current = 0
+      if (wantListen.current && !speakingRef.current) { try { r.start() } catch { /* already running */ } }
+    }
     rec.current = r; wantListen.current = true; setListening(true)
     try { r.start() } catch { /* already running */ }
   }
+  function sendHeard() {
+    const t = (pendingSpeech.current + ' ' + sessFin.current).trim()
+    pendingSpeech.current = ''; sessFin.current = ''; base.current = finEnd.current; setInterim('')
+    if (t) send(t)
+  }
   function stopListening() { wantListen.current = false; setListening(false); rec.current?.stop() }
-  const toggleMic = () => (listening ? stopListening() : startListening())
+  const toggleMic = () => (speakingRef.current ? stopSpeaking() : listening ? stopListening() : startListening())
+
+  // Back: the phone's own back gesture or the Back button returns to the Core.
+  const onCloseRef = useRef(onClose); onCloseRef.current = onClose
+  useEffect(() => {
+    history.pushState({ coreTalk: true }, '')
+    const back = () => onCloseRef.current()
+    addEventListener('popstate', back)
+    return () => removeEventListener('popstate', back)
+  }, [])
+  const close = () => (history.state?.coreTalk ? history.back() : onClose())
 
   async function decide(approve: boolean) {
     if (!proposal) return
@@ -223,17 +260,18 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
   }
 
   useEffect(() => () => { wantListen.current = false; rec.current?.stop(); turnId.current++; try { source.current?.stop() } catch { /* stopped */ } speechSynthesis.cancel() }, [])
-  useEffect(() => { const k = (e: KeyboardEvent) => e.key === 'Escape' && onClose(); addEventListener('keydown', k); return () => removeEventListener('keydown', k) }, [onClose])
+  useEffect(() => { const k = (e: KeyboardEvent) => e.key === 'Escape' && close(); addEventListener('keydown', k); return () => removeEventListener('keydown', k) })
 
   const first = name.split(' ')[0]
   return (
     <div className="core-talk" role="dialog" aria-modal="true" aria-label={`Talk to ${name}`} style={{ '--c': `var(${color})` } as React.CSSProperties}>
       <div className={`talk-portrait${speaking ? ' speaking' : ''}${busy ? ' thinking' : ''}`}>
+        <button type="button" className="talk-back" onClick={close} aria-label="Back to the Core"><span aria-hidden="true">←</span> Back</button>
         {/* eslint-disable-next-line @next/next/no-img-element -- static portrait from /public, fixed size */}
         <img src={`/agents/${agent}.webp`} alt={`${name}, ${role}`} />
         <span className="talk-state">{busy && !speaking ? 'thinking' : speaking ? 'speaking' : listening ? 'listening' : 'ready'}{engine === 'kokoro' && voicePct !== null ? ` · our voice ${voicePct}%` : ''}</span>
-        <button type="button" className={`talk-mic${listening ? ' on' : ''}`} aria-pressed={listening} aria-label={listening ? 'Stop listening' : `Talk to ${first}`} onClick={toggleMic}>
-          <MicIcon /><span>{listening ? 'Listening' : 'Talk'}</span>
+        <button type="button" className={`talk-mic${listening ? ' on' : ''}`} aria-pressed={listening} aria-label={speaking ? `Stop ${first}` : listening ? 'Stop listening' : `Talk to ${first}`} onClick={toggleMic}>
+          <MicIcon /><span>{speaking ? 'Stop' : listening ? 'Listening' : 'Talk'}</span>
         </button>
       </div>
       <div className="talk-side">
@@ -255,11 +293,11 @@ export function TalkPanel({ agent, name, role, voice, color, onClose, onDictiona
               </select>
             </label>
             <button type="button" className="talk-x" onClick={onDictionary}>Dictionary</button>
-            <button type="button" className="talk-x" onClick={onClose} aria-label="Close">Close</button>
+            <button type="button" className="talk-x" onClick={close} aria-label="Close">Close</button>
           </div>
         </header>
         <div className="talk-log" ref={logRef}>
-          {lines.length === 0 && <p className="talk-hint">Tap the microphone and speak, or type below. Talk over {first} any time; they stop and listen.</p>}
+          {lines.length === 0 && <p className="talk-hint">Tap Talk and speak, or type below. While {first} speaks the mic rests; tap Stop to cut in.</p>}
           {lines.map((l, i) => (l.text ? <p key={i} className={l.who}>{l.text}</p> : <p key={i} className="agent interim">…</p>))}
           {interim && <p className="you interim">{interim}</p>}
         </div>
